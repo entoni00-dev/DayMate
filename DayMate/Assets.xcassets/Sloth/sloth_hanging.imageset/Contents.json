@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "sloth_hanging.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

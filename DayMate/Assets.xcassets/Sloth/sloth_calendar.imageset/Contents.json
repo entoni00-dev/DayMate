@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "sloth_calendar.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

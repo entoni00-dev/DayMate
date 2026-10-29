@@ -1,0 +1,83 @@
+//
+//  RootView.swift
+//  DayMate
+//
+//  Created by Antonio Carotenuto.
+//
+//  La vista "radice": decide cosa mostrare.
+//
+//  @AppStorage salva un valore semplice in UserDefaults (sempre sul telefono).
+//  Va benissimo per flag e impostazioni; per i dati veri uso SwiftData.
+//
+//  🧭 Come si entra nell'app:
+//
+//   PRIMA VOLTA:  "Slooow" ─► 3 schermate di presentazione ─► "Come vuoi usare DayMate?"
+//                                                               │
+//              ┌────────────────────────────────────────────────┴───────────────┐
+//              ▼                                                                ▼
+//   📚 MODALITÀ STUDIO                                              🗓️ MODALITÀ PLANNER
+//   [ Esami | Dubbi | Coach | Progressi ]   + Esame/Dubbio  ⚙️      [ Giorno | Settimana | Scadenze ]  + Attività  ⚙️
+//
+//   DALLA SECONDA VOLTA: si apre direttamente la modalità scelta.
+//   Per cambiarla: ⚙️ Impostazioni → Modalità (come "uscire ed entrare" con un altro profilo).
+//
+
+import SwiftUI
+
+/// Le schermate raggiungibili dalla barra in alto di entrambe le modalità
+enum AppRoute: Hashable {
+    case settings
+}
+
+struct RootView: View {
+    // @AppStorage salva un valore semplice nelle impostazioni del telefono (UserDefaults)
+    @AppStorage(AppSettings.hasSeenOnboardingKey) private var hasSeenOnboarding = false
+    /// La modalità scelta all'inizio ("" = non ancora scelta)
+    @AppStorage(AppMode.storageKey) private var modeRaw = ""
+    /// La lingua scelta dall'utente (di default italiano)
+    @AppStorage(L10n.languageKey) private var language = AppLanguage.italian.rawValue
+    /// Il percorso di navigazione sta QUI: quando cambi lingua l'app viene ridisegnata
+    /// da capo, ma resti nella schermata in cui eri (es. Impostazioni).
+    @State private var path = NavigationPath()
+
+    private var mode: AppMode? { AppMode(rawValue: modeRaw) }
+
+    var body: some View {
+        Group {
+            if hasSeenOnboarding, let mode {
+                switch mode {
+                case .study:
+                    StudyModeView(path: $path)
+                        .transition(.opacity)
+                case .planner:
+                    PlannerModeView(path: $path)
+                        .transition(.opacity)
+                }
+            } else {
+                // Se l'introduzione è già stata vista ma manca la modalità
+                // (es. aggiornamento dalla versione precedente) chiedo solo quella.
+                OnboardingView(onlyModeChoice: hasSeenOnboarding) { chosen in
+                    // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
+                    withAnimation(.easeInOut) {
+                        modeRaw = chosen.rawValue
+                        hasSeenOnboarding = true
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
+        // Quando cambia la lingua ricreo tutte le viste: così ogni tr("…", "…") viene rifatto
+        .id(language)
+        // Cambiando modalità si riparte dalla sua prima schermata
+        .onChange(of: modeRaw) { _, _ in path = NavigationPath() }
+        // Date, DatePicker ecc. nella stessa lingua dei testi
+        .environment(\.locale, AppLanguage(rawValue: language)?.locale ?? L10n.locale)
+        .tint(Theme.rust)
+    }
+}
+
+// Anteprima per il canvas di Xcode (non finisce nell'app)
+#Preview {
+    RootView()
+        .modelContainer(PreviewData.container)
+}
