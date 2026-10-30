@@ -158,8 +158,8 @@ struct SettingsView: View {
                             titleVisibility: .visible) {
             Button(tr("Delete everything", "Cancella tutto"), role: .destructive) { resetAll() }
         } message: {
-            Text(tr("Exams, steps, doubts, planner and statistics will be deleted. This can't be undone.",
-                    "Esami, passi, dubbi, planner e statistiche verranno eliminati. Non si può annullare."))
+            Text(tr("Exams, steps, planner and statistics will be deleted. This can't be undone.",
+                    "Esami, passi, planner e statistiche verranno eliminati. Non si può annullare."))
         }
     }
 
@@ -169,7 +169,6 @@ struct SettingsView: View {
             try context.delete(model: StudySession.self)
             try context.delete(model: StudyStep.self)
             try context.delete(model: Exam.self)
-            try context.delete(model: Doubt.self)
             try context.delete(model: PlannerTask.self)
             try context.delete(model: WaterLog.self)
             try context.save()

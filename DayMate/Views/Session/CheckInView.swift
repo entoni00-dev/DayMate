@@ -35,9 +35,10 @@ struct CheckInView: View {
                             Haptics.tap()
                             onSelect(mood)
                         } label: {
-                            row(mood)
+                            MoodRowLabel(mood: mood, showsSubtitle: !isCheckOut)
                         }
-                        .buttonStyle(.plain)
+                        // al tocco la riga diventa viola e si ingrandisce un po'
+                        .buttonStyle(ChoiceButtonStyle(cornerRadius: 16, restColor: .clear))
 
                         // la linea va solo TRA le righe, non dopo l'ultima
                         if mood != Mood.allCases.last {
@@ -51,8 +52,16 @@ struct CheckInView: View {
             .padding(.top, 8)
         }
     }
+}
 
-    private func row(_ mood: Mood) -> some View {
+/// Una riga di "How do you feel?": Blob, umore, cosa farà l'app, freccia
+private struct MoodRowLabel: View {
+    let mood: Mood
+    let showsSubtitle: Bool
+    // lo legge da ChoiceButtonStyle: true = sono viola (il dito è sopra di me)
+    @Environment(\.isLit) private var isLit
+
+    var body: some View {
         HStack(spacing: 14) {
             // il Blob in un cerchio chiaro
             BlobView(pose: mood.pose)
@@ -63,17 +72,17 @@ struct CheckInView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(mood.title)
                     .font(.dmRowTitle)
-                    .foregroundStyle(Theme.text)
-                if !isCheckOut {
+                    .foregroundStyle(isLit ? Theme.background : Theme.text)
+                if showsSubtitle {
                     Text(mood.subtitle)
                         .font(.footnote)
-                        .foregroundStyle(Theme.secondary)
+                        .foregroundStyle(isLit ? Theme.background : Theme.secondary)
                 }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.secondary)
+                .foregroundStyle(isLit ? Theme.background : Theme.secondary)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)

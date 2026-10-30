@@ -349,20 +349,10 @@ struct AddTaskSheet: View {
                             Haptics.tap()
                             kind = option
                         } label: {
-                            VStack(spacing: 10) {
-                                IconTile(systemName: option.icon, inverted: kind == option)
-                                Text(option.title)
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(kind == option ? Theme.background : Theme.text)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 96)
-                            .background(kind == option ? Theme.main : Theme.card,
-                                        in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            KindTileLabel(kind: option)
                         }
-                        .buttonStyle(.plain)
+                        // il tipo scelto è viola; gli altri diventano viola al tocco
+                        .buttonStyle(ChoiceButtonStyle(isSelected: kind == option, cornerRadius: 20))
                     }
                 }
 
@@ -430,6 +420,27 @@ struct AddTaskSheet: View {
                                    durationMinutes: duration, isDeadline: isDeadline))
         Haptics.success()
         dismiss()
+    }
+}
+
+/// Una tessera di "Type": Study / Duty / Free time
+private struct KindTileLabel: View {
+    let kind: TaskKind
+    // lo legge da ChoiceButtonStyle: true = sono viola
+    @Environment(\.isLit) private var isLit
+
+    var body: some View {
+        VStack(spacing: 10) {
+            IconTile(systemName: kind.icon, inverted: isLit)
+            Text(kind.title)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(isLit ? Theme.background : Theme.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 96)
+        .contentShape(Rectangle())
     }
 }
 

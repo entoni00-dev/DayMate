@@ -9,8 +9,8 @@
 //  🧭 La barra ha SEMPRE la Home all'inizio e le Impostazioni alla fine.
 //  In mezzo ci sono le sezioni della modalità scelta (come entrare "da utente" o "da titolare"):
 //
-//   📚 STUDIO   🏠 Home · ☀️ Oggi   · 💬 Dubbi     · 📊 Progressi · ⚙️ Impostazioni
-//   🗓️ PLANNER  🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze  · ⚙️ Impostazioni
+//   📚 STUDIO   🏠 Home · ☀️ Oggi   · 📊 Progressi · ⚙️ Impostazioni
+//   🗓️ PLANNER  🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
 //
 //  🏠 Home = la schermata iniziale "Study / Plan my day". Ogni volta che apri l'app
 //  parti da qui: tocchi "Study" e la barra diventa quella dello Studio, tocchi
@@ -27,7 +27,7 @@ import SwiftData
 /// Tutte le sezioni possibili della barra (quali si vedono dipende dalla modalità)
 enum AppTab: Hashable {
     case home
-    case today, doubts, progress          // 📚 Studio
+    case today, progress                  // 📚 Studio
     case day, week, deadlines             // 🗓️ Planner
     case settings
 
@@ -35,7 +35,6 @@ enum AppTab: Hashable {
         switch self {
         case .home:      return "Home"
         case .today:     return tr("Today", "Oggi")
-        case .doubts:    return tr("Doubts", "Dubbi")
         case .progress:  return tr("Progress", "Progressi")
         case .day:       return tr("Day", "Giorno")
         case .week:      return tr("Week", "Settimana")
@@ -48,7 +47,6 @@ enum AppTab: Hashable {
         switch self {
         case .home:      return "house.fill"
         case .today:     return "sun.max.fill"
-        case .doubts:    return "questionmark.bubble.fill"
         case .progress:  return "chart.bar.fill"
         case .day:       return "checklist"
         case .week:      return "calendar"
@@ -64,7 +62,6 @@ struct RootView: View {
     @State private var tab: AppTab = .home
     /// Il giorno scelto nel Planner (condiviso da Giorno, Settimana e Scadenze)
     @State private var plannerDay = Calendar.current.startOfDay(for: .now)
-    @State private var showingAddDoubt = false
     @State private var showingAddTask = false
     // 📌 Stanno QUI e non nelle viste figlie perché quando cambi lingua l'app viene
     // ridisegnata da capo (vedi .id(language)): così resti dove eri.
@@ -92,7 +89,6 @@ struct RootView: View {
             // Le sezioni in mezzo cambiano con la modalità
             if mode == .study {
                 todayTab
-                doubtsTab
                 progressTab
             } else {
                 dayTab
@@ -105,9 +101,6 @@ struct RootView: View {
         // la sezione scelta nella barra è viola
         .tint(Theme.main)
         // .sheet = un foglio che sale dal basso sopra la schermata
-        .sheet(isPresented: $showingAddDoubt) {
-            AddDoubtSheet()
-        }
         .sheet(isPresented: $showingAddTask) {
             AddTaskSheet(day: plannerDay, isDeadline: tab == .deadlines)
         }
@@ -159,18 +152,6 @@ struct RootView: View {
         }
         .tabItem { Label(AppTab.today.title, systemImage: AppTab.today.icon) }
         .tag(AppTab.today)
-    }
-
-    private var doubtsTab: some View {
-        NavigationStack {
-            screen(title: AppTab.doubts.title,
-                   addLabel: tr("New doubt", "Nuovo dubbio"),
-                   onAdd: { showingAddDoubt = true }) {
-                DoubtsView(embedded: true)
-            }
-        }
-        .tabItem { Label(AppTab.doubts.title, systemImage: AppTab.doubts.icon) }
-        .tag(AppTab.doubts)
     }
 
     private var progressTab: some View {

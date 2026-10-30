@@ -255,13 +255,4 @@ final class StudySessionModel {
         LiveActivityManager.shared.end(isBreak: true)
         SoundPlayer.shared.stop()
     }
-
-    // MARK: - 💭 Parcheggio dubbi
-
-    func parkDoubt(_ text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let context else { return }
-        let doubt = Doubt(text: trimmed, topic: currentStep?.topic ?? exam.name, examName: exam.name)
-        context.insert(doubt)
-    }
 }

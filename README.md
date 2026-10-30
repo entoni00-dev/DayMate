@@ -31,19 +31,19 @@ Requisiti: **iOS 17+**. Nessuna intelligenza artificiale: tutto funziona con reg
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
 3. **Due modi di usare l'app, scelti nella Home** (come entrare "da utente" o "da titolare"). La barra in basso ha sempre 🏠 Home all'inizio e ⚙️ Impostazioni alla fine; in mezzo, le sezioni della modalità scelta:
-   - 📚 **Studio** → 🏠 Home · ☀️ Oggi · 💬 Dubbi · 📊 Progressi · ⚙️ Impostazioni
+   - 📚 **Studio** → 🏠 Home · ☀️ Oggi · 📊 Progressi · ⚙️ Impostazioni
    - 🗓️ **Planner** → 🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
    - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; "‹ Home" in Oggi e in Plan riporta qui.
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
-   - **Dubbi**: si aggiungono quando vuoi (Dubbi → + Dubbio, o dal menu ••• di un esame), non solo durante un blocco.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
 5. **Planner**: settimana, STUDY (passi d'esame del giorno + attività di studio), DUTIES & FREE TIME con orario, acqua. "Add to your day" con tipo (Studio / Impegno / Tempo libero), ora, durata e "È una scadenza".
 6. **New exam come in Sketch**: materia, data e i piccoli passi scritti a mano (si riordinano trascinando ≡). Con "Crea i passi da argomenti e pagine" l'app genera un piano realistico con regole semplici. **Tempo al giorno** (da 30 min a 5 h) e la card **"Ci sta / Non ci sta"** dicono subito se il piano è fattibile prima dell'esame.
-7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Esami, Dubbi, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`, Live Activity, `@ScaledMetric`.
+7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Today, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`, Live Activity, `@ScaledMetric`.
 8. **Codice scritto per essere capito**: commenti in prima persona in ogni file (📌 Nota per me, 🐛 Problema che ho incontrato), niente trucchi avanzati dove non servono.
 9. **Italiano (predefinito) + inglese a scelta dell'utente**, con `tr("English", "Italiano")` (file `Design/L10n.swift`). Cambiando lingua l'app si ridisegna subito e resti nella schermata in cui eri.
-10. **Niente AI e niente Coach**: l'app non usa l'intelligenza artificiale. Nei Dubbi, quando ne risolvi uno, scrivi tu in due righe "cosa ho capito": diventa un appunto da ripassare.
+10. **Niente AI, niente Coach, niente Dubbi**: l'app resta concentrata su una cosa sola, iniziare a studiare e fare pause vere. "Come ti senti?" resta: è quello che adatta il timer.
 11. **"Un altro passo minuscolo"**: nel riscaldamento di "Stuck", se anche il passo proposto spaventa, ne chiedi un altro con un tocco.
+12. **Effetto al tocco**: i bottoni di scelta (Home, "Come ti senti?", attività della pausa, tipo di impegno) diventano viola come "Study" e si ingrandiscono leggermente appena li tocchi.
 
 ## 🫘 Il Blob (la mascotte)
 
@@ -142,7 +142,7 @@ DayMate/
 │   ├── BlobView.swift               → la mascotte (immagini in Assets/Mascot)
 │   ├── WeekStrip.swift              → la settimana a quadratini
 │   ├── ModeHeader.swift             → intestazione delle schermate (‹ Home, titolo, +) + colori della barra in basso
-├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession, Doubt,
+├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
 ├── Logic/                           → piano di studio, ritmo, notifiche e promemoria, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
@@ -154,7 +154,7 @@ DayMate/
     ├── Exams/                       → esami, nuovo esame, dettaglio
     ├── Study/                       → Oggi (la schermata "Study" di Sketch)
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
-    ├── Doubts/ Stats/ Settings/     → Dubbi con "cosa ho capito", Progressi, Impostazioni e Promemoria
+    ├── Stats/ Settings/             → Progressi, Impostazioni e Promemoria
     └── Components/                  → programma della giornata, StatTile…
 ```
 

@@ -13,7 +13,7 @@
 //   [📖 Study · start a tiny step ]    ← viola: è la scelta consigliata
 //   [📅 Plan my day               ]
 //   ─────────────────────────────────
-//    🏠 Home  💬 Dubbi  📊 Progressi  ⚙️ Impostazioni
+//    🏠 Home · (sezioni della modalità) · ⚙️ Impostazioni
 //
 //  Qui si sceglie come usare l'app (come entrare "da utente" o "da titolare").
 //  È la prima cosa che vedi OGNI volta che apri l'app: la domanda "cosa vuoi fare oggi?"
@@ -75,9 +75,11 @@ struct OnboardingView: View {
                         NotificationManager.shared.requestPermission()
                         onFinish(mode)
                     } label: {
-                        modeRow(mode)
+                        ModeRowLabel(mode: mode, isCurrent: mode == currentMode)
                     }
-                    .buttonStyle(.plain)
+                    // "Study" è sempre viola (la scelta principale, come in Sketch);
+                    // "Plan my day" diventa viola appena lo tocchi
+                    .buttonStyle(ChoiceButtonStyle(isSelected: mode == .study))
                 }
             }
             .padding(.horizontal, 20)
@@ -85,35 +87,39 @@ struct OnboardingView: View {
         }
         .background(Theme.background.ignoresSafeArea())
     }
+}
 
-    /// Una riga: icona, titolo, sottotitolo. "Study" è viola (la scelta principale).
-    private func modeRow(_ mode: AppMode) -> some View {
-        let isMain = mode == .study
+/// Una riga della Home: icona, titolo, sottotitolo (e ✓ se è la modalità in uso).
+/// Quando la riga è viola (isLit) i testi diventano scuri, come "Study" in Sketch.
+private struct ModeRowLabel: View {
+    let mode: AppMode
+    let isCurrent: Bool
+    // lo legge da ChoiceButtonStyle: true = sono viola
+    @Environment(\.isLit) private var isLit
 
-        return HStack(spacing: 16) {
-            IconTile(systemName: mode.icon, inverted: isMain)
+    var body: some View {
+        HStack(spacing: 16) {
+            IconTile(systemName: mode.icon, inverted: isLit)
             VStack(alignment: .leading, spacing: 1) {
                 Text(mode.choiceTitle)
                     .font(.system(.title3, weight: .bold))
-                    .foregroundStyle(isMain ? Theme.background : Theme.text)
+                    .foregroundStyle(isLit ? Theme.background : Theme.text)
                 Text(mode.startSubtitle)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(isMain ? Theme.background : Theme.secondary)
+                    .foregroundStyle(isLit ? Theme.background : Theme.secondary)
             }
             Spacer()
             // ✓ sulla modalità in uso (quella delle sezioni nella barra qui sotto)
-            if mode == currentMode {
+            if isCurrent {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(isMain ? Theme.background : Theme.accent)
+                    .foregroundStyle(isLit ? Theme.background : Theme.accent)
                     .accessibilityLabel(tr("In use", "In uso"))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .frame(minHeight: 64)
-        .background(isMain ? Theme.main : Theme.card,
-                    in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }

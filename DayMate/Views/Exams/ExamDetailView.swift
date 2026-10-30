@@ -36,7 +36,6 @@ struct ExamDetailView: View {
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var showingSession = false
     @State private var confirmDelete = false
-    @State private var showingAddDoubt = false
     @State private var newStepTitle = ""
     @FocusState private var newStepFocused: Bool
 
@@ -101,10 +100,6 @@ struct ExamDetailView: View {
             Text(tr("The steps will be deleted. Your sessions stay in Progress.",
                     "I passi verranno eliminati. Le sessioni restano nei Progressi."))
         }
-        // .sheet = un foglio che sale dal basso sopra la schermata
-        .sheet(isPresented: $showingAddDoubt) {
-            AddDoubtSheet(preselectedExam: exam.name)
-        }
         // .fullScreenCover = una schermata che copre tutto (la sessione di studio)
         .fullScreenCover(isPresented: $showingSession) {
             SessionFlowView(exam: exam)
@@ -115,11 +110,6 @@ struct ExamDetailView: View {
 
     private var optionsMenu: some View {
         Menu {
-            Button {
-                showingAddDoubt = true
-            } label: {
-                Label(tr("Add a doubt", "Aggiungi un dubbio"), systemImage: "questionmark.bubble")
-            }
             // Quanto tempo al giorno posso dedicare a questo esame (serve al piano)
             Picker(tr("Time per day", "Tempo al giorno"), selection: Binding(
                 get: { exam.dailyMinutes },

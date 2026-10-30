@@ -9,6 +9,7 @@
 //   PrimaryButtonStyle  → il bottone viola grande ("Start next step", "Add")
 //   SmallButtonStyle    → il bottone viola piccolo ("▶ Start · 5 min")
 //   QuietButtonStyle    → il link grigio ("Not now")
+//   ChoiceButtonStyle   → le righe da scegliere: al tocco diventano viola e si ingrandiscono
 //   SectionHeader       → le etichette maiuscole ("YOUR EXAMS", "TINY STEPS")
 //   RowDivider          → la linea tra le righe di una lista
 //   IconTile            → il quadratino con l'icona a sinistra delle righe
@@ -51,7 +52,7 @@ struct PrimaryButtonStyle: ButtonStyle {
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .background(Theme.main, in: Capsule())
                 .opacity(isEnabled ? 1 : 0.4)
-                .scaleEffect(configuration.isPressed ? 0.97 : 1)   // si "schiaccia" quando lo premo
+                .scaleEffect(configuration.isPressed ? 1.03 : 1)   // si ingrandisce un po' quando lo premo
                 .animation(.spring(response: 0.3), value: configuration.isPressed)
         }
     }
@@ -70,7 +71,7 @@ struct SmallButtonStyle: ButtonStyle {
             // minHeight invece di height: con il testo grande (Dynamic Type) il bottone cresce
             .frame(minHeight: 40)
             .background(color, in: Capsule())
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .scaleEffect(configuration.isPressed ? 1.05 : 1)
             .animation(.spring(response: 0.3), value: configuration.isPressed)
     }
 }
@@ -86,6 +87,61 @@ struct QuietButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.5 : 1)
             .padding(.vertical, 8)
             .contentShape(Rectangle())   // tutta l'area è toccabile, non solo le lettere
+    }
+}
+
+// MARK: - Bottoni "da scegliere" (Home, Come ti senti?, pausa, tipo di impegno)
+
+/// 💡 Le righe da scegliere: appena ci appoggi il dito diventano VIOLA come "Study"
+/// e si ingrandiscono leggermente. Sull'iPad o sul Mac succede anche solo passandoci
+/// sopra con il puntatore (.onHover).
+///
+/// 📌 Nota per me: il bottone sa se è premuto (configuration.isPressed), ma il testo
+/// DENTRO la riga deve sapere se diventare scuro sul viola. Glielo dico con un valore
+/// nell'environment, `isLit` (vedi in fondo al file): ogni riga lo legge con
+/// @Environment(\.isLit) e cambia colore da sola.
+struct ChoiceButtonStyle: ButtonStyle {
+    /// true = viola anche senza toccarlo (es. "Study" nella Home o l'attività già scelta)
+    var isSelected = false
+    var cornerRadius: CGFloat = 22
+    /// Il colore "a riposo" (Color.clear per le righe che stanno già dentro una card)
+    var restColor: Color = Theme.card
+
+    func makeBody(configuration: Configuration) -> some View {
+        ChoiceButtonBody(configuration: configuration, isSelected: isSelected,
+                         cornerRadius: cornerRadius, restColor: restColor)
+    }
+
+    /// Come per PrimaryButtonStyle: una piccola vista a parte, così posso usare @State
+    /// (per il puntatore) e @Environment (per "Riduci movimento")
+    private struct ChoiceButtonBody: View {
+        let configuration: ButtonStyleConfiguration
+        let isSelected: Bool
+        let cornerRadius: CGFloat
+        let restColor: Color
+
+        @State private var hovering = false
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            // "toccato" = dito appoggiato, oppure puntatore sopra (iPad / Mac)
+            let touched = configuration.isPressed || hovering
+            // "acceso" = viola: se è già scelto oppure se lo sto toccando
+            let lit = isSelected || touched
+
+            configuration.label
+                .environment(\.isLit, lit)
+                .background(lit ? Theme.main : restColor,
+                            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                // si ingrandisce del 4%: abbastanza da sentirlo, non da far "saltare" la lista
+                .scaleEffect(touched && !reduceMotion ? 1.04 : 1)
+                .zIndex(touched ? 1 : 0)            // ingrandita, passa sopra le righe vicine
+                .animation(.spring(response: 0.25, dampingFraction: 0.65), value: touched)
+                .animation(.easeOut(duration: 0.15), value: lit)
+                // iOS 17: una vibrazione leggerissima appena appoggio il dito
+                .sensoryFeedback(.selection, trigger: configuration.isPressed) { _, pressed in pressed }
+                .onHover { hovering = $0 }
+        }
     }
 }
 
@@ -141,7 +197,7 @@ struct ScreenTitle: View {
     }
 }
 
-/// Etichetta piccola + titolo + testo, per le schermate "di lettura" (Dubbi, Progressi…)
+/// Etichetta piccola + titolo + testo, per le schermate "di lettura" (Progressi…)
 struct ScreenHeader: View {
     var eyebrow: String? = nil
     let title: String
@@ -438,6 +494,23 @@ struct LanguageToggle: View {
         }
         .padding(4)
         .background(Theme.card, in: Capsule())
+    }
+}
+
+// MARK: - isLit (per ChoiceButtonStyle)
+//
+// 📌 Un "valore nell'environment" è come una variabile che passa da sola dalla vista
+// madre a tutte le viste figlie. Per crearne uno serve una "chiave" con il valore di default.
+
+private struct IsLitKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// true = la riga è viola (scelta o toccata): il testo dentro deve diventare scuro
+    var isLit: Bool {
+        get { self[IsLitKey.self] }
+        set { self[IsLitKey.self] = newValue }
     }
 }
 

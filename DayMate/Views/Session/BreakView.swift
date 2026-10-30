@@ -87,9 +87,11 @@ struct BreakView: View {
                             Haptics.tap()
                             withAnimation(.snappy) { selected = activity }
                         } label: {
-                            activityRow(activity)
+                            ActivityRowLabel(activity: activity, isChosen: selected == activity)
                         }
-                        .buttonStyle(.plain)
+                        // quella scelta resta viola; le altre diventano viola al tocco
+                        .buttonStyle(ChoiceButtonStyle(isSelected: selected == activity,
+                                                       cornerRadius: 16, restColor: .clear))
 
                         if activity != suggestions.last {
                             RowDivider()
@@ -159,25 +161,6 @@ struct BreakView: View {
         }
         .padding(20)
         .cardBackground(highlighted: true, radius: 22)
-    }
-
-    private func activityRow(_ activity: BreakActivity) -> some View {
-        HStack(spacing: 14) {
-            IconTile(systemName: activity.icon)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(activity.title)
-                    .font(.dmRowTitle)
-                    .foregroundStyle(Theme.text)
-                Text(activity.detail)
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondary)
-            }
-            Spacer(minLength: 0)
-            CheckCircle(state: selected == activity ? .done : .todo)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
     }
 
     // MARK: - Pausa in corso
@@ -250,4 +233,31 @@ struct BreakView: View {
     BreakView(minutes: 10, isLong: false, afterBlock: true, progressText: "3 of 6 · Math",
               onTimeUp: {}, onBackEarly: { _ in }, onStop: {})
         .background(Theme.background)
+}
+
+/// Una riga di "Pick one": icona, attività, dettaglio, cerchio
+private struct ActivityRowLabel: View {
+    let activity: BreakActivity
+    let isChosen: Bool
+    // lo legge da ChoiceButtonStyle: true = sono viola
+    @Environment(\.isLit) private var isLit
+
+    var body: some View {
+        HStack(spacing: 14) {
+            IconTile(systemName: activity.icon, inverted: isLit)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(activity.title)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(isLit ? Theme.background : Theme.text)
+                Text(activity.detail)
+                    .font(.footnote)
+                    .foregroundStyle(isLit ? Theme.background : Theme.secondary)
+            }
+            Spacer(minLength: 0)
+            CheckCircle(state: isChosen ? .done : .todo)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+    }
 }

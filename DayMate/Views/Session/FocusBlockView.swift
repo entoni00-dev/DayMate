@@ -32,10 +32,6 @@ struct FocusBlockView: View {
     @State private var blockMinutes = 0
     @State private var showTip = false
 
-    // Parcheggio dubbi
-    @State private var showingDoubt = false
-    @State private var doubtText = ""
-    @State private var doubtSaved = false
 
     var body: some View {
         VStack(spacing: 18) {
@@ -94,12 +90,6 @@ struct FocusBlockView: View {
                     Label(tr("Tip", "Consiglio"), systemImage: "lightbulb")
                 }
                 Button {
-                    showingDoubt = true
-                } label: {
-                    Label(doubtSaved ? tr("Saved!", "Salvato!") : tr("Doubt", "Dubbio"),
-                          systemImage: doubtSaved ? "checkmark" : "questionmark.bubble")
-                }
-                Button {
                     finish(.breakNow)
                 } label: {
                     Label(tr("Break", "Pausa"), systemImage: "cup.and.saucer")
@@ -117,14 +107,6 @@ struct FocusBlockView: View {
             countdown.stop()
             NotificationManager.shared.cancel(id: NotificationManager.focusID)
             LiveActivityManager.shared.end(isBreak: false)
-        }
-        .alert(tr("Park your doubt", "Parcheggia il dubbio"), isPresented: $showingDoubt) {
-            TextField(tr("E.g. Why does the limit equal 1?", "Es. Perché il limite fa 1?"), text: $doubtText)
-            Button(tr("Save", "Salva")) { saveDoubt() }
-            Button(tr("Cancel", "Annulla"), role: .cancel) { doubtText = "" }
-        } message: {
-            Text(tr("Write it down and keep going: you'll find it later in Doubts.",
-                    "Scrivilo e vai avanti: lo ritrovi dopo in Dubbi."))
         }
     }
 
@@ -201,16 +183,5 @@ struct FocusBlockView: View {
         countdown.stop()
         NotificationManager.shared.cancel(id: NotificationManager.focusID)
         model.endBlock(elapsedSeconds: Int(countdown.elapsed), reason: reason)
-    }
-
-    private func saveDoubt() {
-        model.parkDoubt(doubtText)
-        doubtText = ""
-        Haptics.tap()
-        withAnimation { doubtSaved = true }
-        // Dopo 2 secondi il bottone torna normale
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation { doubtSaved = false }
-        }
     }
 }

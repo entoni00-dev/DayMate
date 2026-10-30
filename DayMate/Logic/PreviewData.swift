@@ -19,7 +19,7 @@ enum PreviewData {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         // try! va bene SOLO qui: se fallisce in preview voglio saperlo subito.
         let container = try! ModelContainer(
-            for: Exam.self, StudyStep.self, StudySession.self, Doubt.self, PlannerTask.self, WaterLog.self,
+            for: Exam.self, StudyStep.self, StudySession.self, PlannerTask.self, WaterLog.self,
             configurations: config
         )
         let context = container.mainContext
@@ -57,8 +57,6 @@ enum PreviewData {
         context.insert(session)
         session.exam = math
 
-        // Un dubbio parcheggiato
-        context.insert(Doubt(text: "Perché il limite di sin(x)/x fa 1?", topic: "Limiti", examName: "Math"))
 
         // Planner: due cose da fare e 5 bicchieri d'acqua
         // (bySettingHour crea "oggi alle 15:00")

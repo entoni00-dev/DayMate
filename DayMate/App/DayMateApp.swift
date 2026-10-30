@@ -36,7 +36,7 @@ struct DayMateApp: App {
         // Qui "registro" i modelli che SwiftData deve salvare.
         // Il container viene iniettato nell'environment, così ogni vista
         // può usare @Query (per leggere) e \.modelContext (per scrivere).
-        .modelContainer(for: [Exam.self, StudyStep.self, StudySession.self, Doubt.self,
+        .modelContainer(for: [Exam.self, StudyStep.self, StudySession.self,
                               PlannerTask.self, WaterLog.self])
         // PlannerTask e WaterLog sono i dati della modalità Planner (vedi PlannerItems.swift)
     }

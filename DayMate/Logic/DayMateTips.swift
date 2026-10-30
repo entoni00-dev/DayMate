@@ -33,20 +33,6 @@ struct TinyStepTip: Tip {
     }
 }
 
-/// Nella sezione Dubbi: spiega a cosa servono
-struct DoubtTip: Tip {
-    var title: Text {
-        Text(tr("Park your doubts", "Parcheggia i dubbi"))
-    }
-    var message: Text? {
-        Text(tr("Don't understand something? Tap \"+ Doubt\", write it in 5 seconds and keep studying. You'll solve it later.",
-                "Qualcosa non ti è chiaro? Tocca \"+ Dubbio\", scrivilo in 5 secondi e continua a studiare. Lo risolvi dopo."))
-    }
-    var image: Image? {
-        Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
-    }
-}
-
 /// Nel Planner: come si eliminano le attività
 struct PlannerTip: Tip {
     var title: Text {
