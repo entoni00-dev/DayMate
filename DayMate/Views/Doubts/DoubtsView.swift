@@ -34,7 +34,7 @@ struct DoubtsView: View {
             if !embedded {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
-                        TopLink(title: "Coach", showsChevron: true)
+                        TopLink(title: tr("Back", "Indietro"), showsChevron: true)
                         Spacer()
                         Button {
                             showingAdd = true

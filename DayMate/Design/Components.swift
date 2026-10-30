@@ -139,7 +139,7 @@ struct ScreenTitle: View {
     }
 }
 
-/// Etichetta piccola + titolo + testo, per le schermate "di lettura" (Coach, Dubbi…)
+/// Etichetta piccola + titolo + testo, per le schermate "di lettura" (Dubbi, Progressi…)
 struct ScreenHeader: View {
     var eyebrow: String? = nil
     let title: String

@@ -6,7 +6,7 @@
 //
 //  💭 Aggiungere un dubbio in qualsiasi momento (non solo durante un blocco di studio).
 //  Scrivi la domanda, e se vuoi la colleghi a un esame e a un argomento:
-//  così dopo, nel Coach, il Tutor AI sa di cosa si parla.
+//  così dopo, nei Dubbi, il Tutor AI sa di cosa si parla.
 //
 
 import SwiftUI

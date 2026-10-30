@@ -4,41 +4,48 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  🗓️ La modalità Planner: la "home" di chi sceglie "Plan my day" nella schermata iniziale.
+//  🗓️ La modalità Planner: si apre quando nella schermata iniziale tocchi "Plan my day".
 //
-//   [Planner]                    ⚙️ (+)
+//   [📅 Planner]                      (+)
 //   Plan
-//   ( Giorno ) Settimana  Scadenze
+//   Thursday 29 October
+//   …contenuto della sezione…
+//   ─────────────────────────────────────
+//    ✅ Giorno   📅 Settimana   🚩 Scadenze   ⚙️ Impostazioni     ← barra in basso (TabView)
 //
-//   - Giorno    → la schermata "Plan" di Sketch: settimana, studio, impegni, acqua
-//   - Settimana → i 7 giorni in colpo d'occhio
-//   - Scadenze  → consegne, pagamenti, esami… con il conto alla rovescia
+//   - Giorno       → la schermata "Plan" di Sketch: settimana, studio, impegni, acqua
+//   - Settimana    → i 7 giorni in colpo d'occhio
+//   - Scadenze     → consegne, pagamenti, esami… con il conto alla rovescia
+//   - Impostazioni → obiettivo acqua, lingua, cambio modalità
 //
-//  Tutte e tre le sezioni condividono lo stesso giorno scelto: tocchi un giorno nella
-//  Settimana e si apre quel giorno. Il "+" apre "Add to your day".
+//  Giorno, Settimana e Scadenze condividono lo stesso giorno scelto: tocchi un giorno
+//  nella Settimana e si apre quel giorno. Il "+" apre "Add to your day".
 //
 
 import SwiftUI
 import SwiftData
 
-/// Le 3 sezioni della modalità Planner
+/// Le 4 sezioni della modalità Planner
 enum PlannerTab: String, CaseIterable {
-    case day, week, deadlines
+    case day, week, deadlines, settings
 
+    /// Il titolo grande in cima alla sezione
     var title: String {
         switch self {
         case .day:       return tr("Plan", "Pianifica")
         case .week:      return tr("Week", "Settimana")
         case .deadlines: return tr("Deadlines", "Scadenze")
+        case .settings:  return tr("Settings", "Impostazioni")
         }
     }
 
-    /// Il nome corto nella barra
+    /// Il nome corto nella barra in basso
     var shortTitle: String {
         switch self {
         case .day:       return tr("Day", "Giorno")
         case .week:      return tr("Week", "Settimana")
         case .deadlines: return tr("Deadlines", "Scadenze")
+        case .settings:  return tr("Settings", "Impostazioni")
         }
     }
 
@@ -47,76 +54,90 @@ enum PlannerTab: String, CaseIterable {
         case .day:       return "checklist"
         case .week:      return "calendar"
         case .deadlines: return "flag.fill"
+        case .settings:  return "gearshape.fill"
         }
-    }
-
-    /// La stessa sezione pronta per la barra in alto
-    var item: TabItem {
-        TabItem(id: rawValue, title: shortTitle, icon: icon)
     }
 }
 
 struct PlannerModeView: View {
-    // @Binding = il percorso di navigazione appartiene a RootView
-    @Binding var path: NavigationPath
+    // @Binding = la sezione aperta appartiene a RootView (così resta uguale se cambio lingua)
+    @Binding var tab: PlannerTab
+    /// Torna alla schermata iniziale ("Studiare o organizzare la giornata?")
+    var onChangeMode: () -> Void
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var tab: PlannerTab = .day
     @State private var day = Calendar.current.startOfDay(for: .now)
     @State private var showingAddTask = false
 
     var body: some View {
-        NavigationStack(path: $path) {
-            content
-                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case .settings: SettingsView()
-                    }
+        // TabView = la barra delle sezioni in basso
+        TabView(selection: $tab) {
+            // ✅ Giorno
+            NavigationStack {
+                section(.day, subtitle: day.longDayText) {
+                    PlannerView(day: $day)
                 }
                 .navigationDestination(for: Exam.self) { exam in
                     ExamDetailView(exam: exam)
                 }
-        }
-    }
+            }
+            .tabItem { Label(PlannerTab.day.shortTitle, systemImage: PlannerTab.day.icon) }
+            .tag(PlannerTab.day)
 
-    private var content: some View {
-        VStack(spacing: 0) {
-            SpaceHeader(mode: .planner,
-                        title: tab.title,
-                        subtitle: tab == .day ? day.longDayText : nil,
-                        items: PlannerTab.allCases.map { $0.item },
-                        selectedID: tab.rawValue,
-                        onSelect: { id in
-                            if let newTab = PlannerTab(rawValue: id) {
-                                // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
-                                withAnimation(.snappy) { tab = newTab }
-                            }
-                        },
-                        addLabel: tr("Add to your day", "Aggiungi alla giornata"),
-                        onAdd: { showingAddTask = true })
-
-            Group {
-                switch tab {
-                case .day:
-                    PlannerView(day: $day)
-                case .week:
+            // 📅 Settimana
+            NavigationStack {
+                section(.week) {
                     PlannerWeekView(day: $day) { chosen in
+                        // tocco un giorno → lo apro nella sezione "Giorno"
                         day = chosen
                         tab = .day
                     }
-                case .deadlines:
-                    PlannerDeadlinesView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .transition(.opacity)
+            .tabItem { Label(PlannerTab.week.shortTitle, systemImage: PlannerTab.week.icon) }
+            .tag(PlannerTab.week)
+
+            // 🚩 Scadenze
+            NavigationStack {
+                section(.deadlines) {
+                    PlannerDeadlinesView()
+                }
+                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
+                .navigationDestination(for: Exam.self) { exam in
+                    ExamDetailView(exam: exam)
+                }
+            }
+            .tabItem { Label(PlannerTab.deadlines.shortTitle, systemImage: PlannerTab.deadlines.icon) }
+            .tag(PlannerTab.deadlines)
+
+            // ⚙️ Impostazioni
+            NavigationStack {
+                SettingsView(mode: .planner, onChangeMode: onChangeMode)
+                    .dmTabBar()
+            }
+            .tabItem { Label(PlannerTab.settings.shortTitle, systemImage: PlannerTab.settings.icon) }
+            .tag(PlannerTab.settings)
         }
-        .dmScreen()
+        .tint(Theme.main)
         // .sheet = un foglio che sale dal basso sopra la schermata
         .sheet(isPresented: $showingAddTask) {
             AddTaskSheet(day: day, isDeadline: tab == .deadlines)
         }
+    }
+
+    /// Una sezione: intestazione con il "+" in alto + il suo contenuto
+    private func section<Content: View>(_ tab: PlannerTab,
+                                        subtitle: String? = nil,
+                                        @ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            ModeHeader(mode: .planner, title: tab.title, subtitle: subtitle,
+                       addLabel: tr("Add to your day", "Aggiungi alla giornata"),
+                       onAdd: { showingAddTask = true })
+            content()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .dmScreen()
+        .dmTabBar()
     }
 }
 
@@ -534,6 +555,6 @@ struct AddTaskSheet: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    PlannerModeView(path: .constant(NavigationPath()))
+    PlannerModeView(tab: .constant(.day), onChangeMode: {})
         .modelContainer(PreviewData.container)
 }

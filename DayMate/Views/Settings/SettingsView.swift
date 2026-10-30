@@ -7,11 +7,19 @@
 //  Impostazioni minime. Meno opzioni = meno "procrastinazione da configurazione"
 //  (sistemare le impostazioni invece di studiare è un classico!).
 //
+//  È l'ultima sezione della barra in basso, in tutte e due le modalità.
+//  Alcune impostazioni compaiono solo in una modalità (es. il ritmo di studio solo in Studio).
+//
 
 import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
+    /// La modalità in cui sono (Studio o Planner)
+    let mode: AppMode
+    /// Torna alla schermata iniziale per scegliere l'altra modalità
+    var onChangeMode: () -> Void
+
     // @AppStorage salva un valore semplice nelle impostazioni del telefono (UserDefaults)
     @AppStorage(AppSettings.blockMinutesKey) private var blockMinutes = AppSettings.defaultBlockMinutes
     @AppStorage(AppSettings.shortBreakKey) private var shortBreak = AppSettings.defaultShortBreak
@@ -19,27 +27,16 @@ struct SettingsView: View {
     @AppStorage(AppSettings.waterGoalKey) private var waterGoal = AppSettings.defaultWaterGoal
     @AppStorage(AppSettings.soundEnabledKey) private var soundEnabled = true
     @AppStorage(AppSettings.notificationsKey) private var notificationsEnabled = true
-    @AppStorage(AppSettings.hasSeenOnboardingKey) private var hasSeenOnboarding = true
-    @AppStorage(AppMode.storageKey) private var modeRaw = AppMode.study.rawValue
-    // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var confirmSwitch = false
-
-    // In UserDefaults la modalità è salvata come testo ("study" / "planner"):
-    // qui la ritrasformo nell'enum AppMode
-    private var mode: AppMode { AppMode(rawValue: modeRaw) ?? .study }
-    private var otherMode: AppMode { mode == .study ? .planner : .study }
 
     // modelContext = il "quaderno" di SwiftData: lo uso per inserire ed eliminare dati
     @Environment(\.modelContext) private var context
+    // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var confirmReset = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 14) {
-                TopLink(title: mode.title, showsChevron: true)
-                ScreenHeader(title: tr("Settings", "Impostazioni"))
-            }
-            .padding(.horizontal, 24)
+            // la stessa intestazione delle altre sezioni (qui senza "+")
+            ModeHeader(mode: mode, title: tr("Settings", "Impostazioni"))
 
             Form {
                 // MARK: Modalità
@@ -58,16 +55,16 @@ struct SettingsView: View {
                         }
                     }
                     Button {
-                        confirmSwitch = true
+                        Haptics.tap()
+                        onChangeMode()
                     } label: {
-                        Label(tr("Switch to \(otherMode.title)", "Passa a \(otherMode.title)"),
-                              systemImage: "arrow.left.arrow.right")
+                        Label(tr("Change mode", "Cambia modalità"), systemImage: "arrow.left.arrow.right")
                     }
                 } header: {
                     Text(tr("Mode", "Modalità"))
                 } footer: {
-                    Text(tr("Your data stays on the phone: exams, doubts and tasks are still there when you come back.",
-                            "I tuoi dati restano sul telefono: esami, dubbi e attività ci sono ancora quando torni."))
+                    Text(tr("Every time you open DayMate it asks you again what you want to do. Your data stays on the phone: exams, doubts and tasks are still there when you come back.",
+                            "Ogni volta che apri DayMate ti richiede cosa vuoi fare. I tuoi dati restano sul telefono: esami, dubbi e attività ci sono ancora quando torni."))
                 }
                 .listRowBackground(Theme.card)
 
@@ -146,9 +143,6 @@ struct SettingsView: View {
                 .listRowBackground(Theme.card)
 
                 Section {
-                    Button(tr("Back to the start screen", "Torna alla schermata iniziale")) {
-                        hasSeenOnboarding = false
-                    }
                     Button(tr("Delete all data", "Cancella tutti i dati"), role: .destructive) {
                         confirmReset = true
                     }
@@ -177,16 +171,6 @@ struct SettingsView: View {
         }
         .dmScreen()
         // .confirmationDialog chiede conferma prima di un'azione che non si può annullare
-        .confirmationDialog(tr("Switch to \(otherMode.title)?", "Passare a \(otherMode.title)?"),
-                            isPresented: $confirmSwitch,
-                            titleVisibility: .visible) {
-            Button(tr("Switch", "Passa")) {
-                Haptics.success()
-                modeRaw = otherMode.rawValue
-            }
-        } message: {
-            Text(otherMode.choiceSubtitle)
-        }
         .confirmationDialog(tr("Delete all data?", "Cancellare tutti i dati?"),
                             isPresented: $confirmReset,
                             titleVisibility: .visible) {
@@ -217,6 +201,6 @@ struct SettingsView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    NavigationStack { SettingsView() }
+    NavigationStack { SettingsView(mode: .study, onChangeMode: {}) }
         .modelContainer(PreviewData.container)
 }

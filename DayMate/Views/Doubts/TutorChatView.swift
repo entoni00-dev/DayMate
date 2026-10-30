@@ -31,7 +31,7 @@ struct TutorChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                TopLink(title: "Coach", showsChevron: true)
+                TopLink(title: tr("Doubts", "Dubbi"), showsChevron: true)
                 Spacer()
                 Button {
                     chat.reset()

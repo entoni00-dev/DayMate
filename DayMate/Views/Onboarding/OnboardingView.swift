@@ -13,9 +13,10 @@
 //   [📖 Study · start a tiny step ]    ← viola: è la scelta consigliata
 //   [📅 Plan my day               ]
 //
-//  Qui si sceglie UNA volta come usare l'app (come entrare "da utente" o "da titolare").
-//  Dalla seconda apertura si parte direttamente dalla modalità scelta;
-//  per cambiarla: Impostazioni → Modalità.
+//  Qui si sceglie come usare l'app (come entrare "da utente" o "da titolare").
+//  Compare OGNI volta che apri l'app: la domanda "cosa vuoi fare oggi?" è voluta,
+//  perché un giorno studi e un altro organizzi la giornata.
+//  Da dentro l'app si torna qui con Impostazioni → "Cambia modalità".
 //
 
 import SwiftUI

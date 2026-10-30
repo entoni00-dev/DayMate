@@ -19,7 +19,6 @@ enum AppSettings {
     static let longBreakKey          = "longBreakMinutes"
     static let soundEnabledKey       = "soundEnabled"
     static let notificationsKey      = "notificationsEnabled"
-    static let hasSeenOnboardingKey  = "hasSeenOnboarding"
     static let waterGoalKey          = "waterGoal"
 
     // Valori di default

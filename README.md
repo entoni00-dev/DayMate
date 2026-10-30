@@ -30,10 +30,10 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
-3. **Due modi di usare l'app, scelti una volta all'inizio** (come entrare "da utente" o "da titolare"): dopo la presentazione, "Come vuoi usare DayMate?"
-   - 📚 **Studio** → barra in alto: Esami · Dubbi · Coach · Progressi (+ Esame / + Dubbio)
-   - 🗓️ **Planner** → barra in alto: Giorno · Settimana · Scadenze (+ Attività / + Scadenza)
-   - Dalla seconda apertura l'app parte direttamente nella modalità scelta. Si cambia da ⚙️ Impostazioni → Modalità; i dati restano.
+3. **Due modi di usare l'app, scelti a ogni apertura** (come entrare "da utente" o "da titolare"): la schermata iniziale chiede sempre "Study" oppure "Plan my day".
+   - 📚 **Studio** → barra in basso: Oggi · Dubbi · Progressi · Impostazioni (+ Esame / + Dubbio)
+   - 🗓️ **Planner** → barra in basso: Giorno · Settimana · Scadenze · Impostazioni (+ Attività / + Scadenza)
+   - La modalità non viene salvata: chiudendo l'app, alla riapertura la domanda ricompare. Senza chiudere l'app si torna alla scelta da ⚙️ Impostazioni → Cambia modalità; i dati restano.
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
    - **Dubbi**: si aggiungono quando vuoi (Dubbi → + Dubbio, o dal menu ••• di un esame), non solo durante un blocco.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
@@ -42,7 +42,7 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Esami, Dubbi, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`; e il **Tutor AI on-device** con Foundation Models (iOS 26).
 8. **Codice scritto per essere capito**: commenti in prima persona in ogni file (📌 Nota per me, 🐛 Problema che ho incontrato), niente trucchi avanzati dove non servono.
 9. **Italiano (predefinito) + inglese a scelta dell'utente**, con `tr("English", "Italiano")` (file `Design/L10n.swift`). Cambiando lingua l'app si ridisegna subito e resti nella schermata in cui eri.
-10. Coach, Progress e Impostazioni restano tutti, ridisegnati.
+10. **Coach tolto**: i consigli e "Cosa funziona davvero" non ci sono più. Il Tutor AI resta dentro i Dubbi ("Chiedi al tutor").
 
 ## 🫘 Il Blob (la mascotte)
 
@@ -96,10 +96,10 @@ DayMate/
 │   ├── L10n.swift                   → lingua scelta dall'utente (IT di default): tr("…", "…")
 │   ├── BlobView.swift               → la mascotte (immagini in Assets/Mascot)
 │   ├── WeekStrip.swift              → la settimana a quadratini
-│   ├── TopTabBar.swift              → la barra in alto delle modalità Studio / Planner
+│   ├── ModeHeader.swift             → intestazione delle sezioni + colori della barra in basso
 ├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession, Doubt,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
-├── Logic/                           → piano di studio, ritmo, coach, tutor AI, notifiche, suoni
+├── Logic/                           → piano di studio, ritmo, tutor AI, notifiche, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
 └── Views/
     ├── Onboarding/                  → schermata iniziale: Study oppure Plan my day
@@ -107,7 +107,7 @@ DayMate/
     ├── Exams/                       → esami, nuovo esame, dettaglio
     ├── Study/                       → modalità Studio + "Today"
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
-    ├── Coach/ Stats/ Settings/
+    ├── Doubts/ Stats/ Settings/
     └── Components/                  → programma della giornata, StatTile…
 ```
 

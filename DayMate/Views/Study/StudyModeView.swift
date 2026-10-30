@@ -4,17 +4,22 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  📚 La modalità Studio: la "home" di chi sceglie "Study" nella schermata iniziale.
+//  📚 La modalità Studio: si apre quando nella schermata iniziale tocchi "Study".
 //
-//   [Studio]                     ⚙️ (+)
+//   [📖 Studio]                       (+)
 //   Today
 //   Thursday 29 October
-//   ( Oggi ) Dubbi  Coach  Progressi
+//   …contenuto della sezione…
+//   ─────────────────────────────────────
+//    ☀️ Oggi   💬 Dubbi   📊 Progressi   ⚙️ Impostazioni     ← barra in basso (TabView)
 //
-//   - Oggi      → prossimo passo, i tuoi esami, il piano di oggi (schermata Today di Sketch)
-//   - Dubbi     → le domande parcheggiate
-//   - Coach     → consigli dai tuoi dati, Tutor AI, cosa funziona davvero
-//   - Progressi → quante volte hai iniziato, minuti, umore prima/dopo
+//   - Oggi         → prossimo passo, i tuoi esami, il piano di oggi (schermata Today di Sketch)
+//   - Dubbi        → le domande parcheggiate (con il Tutor AI, se l'iPhone lo supporta)
+//   - Progressi    → quante volte hai iniziato, minuti, umore prima/dopo
+//   - Impostazioni → ritmo di studio, avvisi, lingua, cambio modalità
+//
+//  📌 Nota per me: ogni sezione ha la SUA NavigationStack. Così se apro un esame
+//  in "Oggi", passo a "Dubbi" e poi torno, ritrovo l'esame aperto (come in Musica o Foto).
 //
 
 import SwiftUI
@@ -22,14 +27,14 @@ import SwiftData
 
 /// Le 4 sezioni della modalità Studio
 enum StudyTab: String, CaseIterable {
-    case today, doubts, coach, progress
+    case today, doubts, progress, settings
 
     var title: String {
         switch self {
         case .today:    return tr("Today", "Oggi")
         case .doubts:   return tr("Doubts", "Dubbi")
-        case .coach:    return "Coach"
         case .progress: return tr("Progress", "Progressi")
+        case .settings: return tr("Settings", "Impostazioni")
         }
     }
 
@@ -37,104 +42,101 @@ enum StudyTab: String, CaseIterable {
         switch self {
         case .today:    return "sun.max.fill"
         case .doubts:   return "questionmark.bubble.fill"
-        case .coach:    return "sparkles"
         case .progress: return "chart.bar.fill"
+        case .settings: return "gearshape.fill"
         }
-    }
-
-    /// La stessa sezione pronta per la barra in alto
-    var item: TabItem {
-        TabItem(id: rawValue, title: title, icon: icon)
     }
 }
 
 struct StudyModeView: View {
-    // @Binding = il percorso di navigazione appartiene a RootView
-    @Binding var path: NavigationPath
+    // @Binding = la sezione aperta appartiene a RootView: così, se cambio lingua
+    // e l'app viene ridisegnata, resto nella stessa sezione
+    @Binding var tab: StudyTab
+    /// Torna alla schermata iniziale ("Studiare o organizzare la giornata?")
+    var onChangeMode: () -> Void
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var tab: StudyTab = .today
     @State private var showingAddExam = false
     @State private var showingAddDoubt = false
 
-    /// Il "+" cambia significato in base alla sezione
-    private var addLabel: String? {
-        switch tab {
-        case .today:          return tr("New exam", "Nuovo esame")
-        case .doubts, .coach: return tr("New doubt", "Nuovo dubbio")
-        case .progress:       return nil
-        }
-    }
-
-    /// Sotto "Today" metto la data, come in Sketch ("Thursday 29 October")
-    private var subtitle: String? {
-        tab == .today ? Date.now.longDayText : nil
-    }
-
     var body: some View {
-        NavigationStack(path: $path) {
-            content
-                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case .settings: SettingsView()
-                    }
+        // TabView = la barra delle sezioni in basso.
+        // selection: $tab → la TabView sa quale sezione è aperta e la cambia quando tocco un'icona
+        TabView(selection: $tab) {
+            // ☀️ Oggi
+            NavigationStack {
+                section(.today, subtitle: Date.now.longDayText,
+                        addLabel: tr("New exam", "Nuovo esame"), onAdd: { showingAddExam = true }) {
+                    TodayView(onAddExam: { showingAddExam = true })
                 }
+                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
                 .navigationDestination(for: Exam.self) { exam in
                     ExamDetailView(exam: exam)
                 }
                 .navigationDestination(isPresented: $showingAddExam) {
                     AddExamView()
-                }
-        }
-    }
-
-    private var content: some View {
-        VStack(spacing: 0) {
-            SpaceHeader(mode: .study,
-                        title: tab.title,
-                        subtitle: subtitle,
-                        items: StudyTab.allCases.map { $0.item },
-                        selectedID: tab.rawValue,
-                        onSelect: { id in
-                            // dall'id ("today", "doubts"…) ritrovo la sezione
-                            if let newTab = StudyTab(rawValue: id) {
-                                withAnimation(.snappy) { tab = newTab }
-                            }
-                        },
-                        addLabel: addLabel,
-                        onAdd: add)
-
-            // Il contenuto della sezione scelta
-            Group {
-                switch tab {
-                case .today:    TodayView(onAddExam: { showingAddExam = true })
-                case .doubts:   DoubtsView(embedded: true)
-                case .coach:    CoachView(embedded: true, onOpenDoubts: { tab = .doubts })
-                case .progress: StatsView(embedded: true)
+                        // mentre scrivo un nuovo esame la barra in basso sparisce: meno distrazioni
+                        .toolbar(.hidden, for: .tabBar)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .transition(.opacity)
+            .tabItem { Label(StudyTab.today.title, systemImage: StudyTab.today.icon) }
+            .tag(StudyTab.today)
+
+            // 💬 Dubbi
+            NavigationStack {
+                section(.doubts, addLabel: tr("New doubt", "Nuovo dubbio"), onAdd: { showingAddDoubt = true }) {
+                    DoubtsView(embedded: true)
+                }
+            }
+            .tabItem { Label(StudyTab.doubts.title, systemImage: StudyTab.doubts.icon) }
+            .tag(StudyTab.doubts)
+
+            // 📊 Progressi
+            NavigationStack {
+                section(.progress) {
+                    StatsView(embedded: true)
+                }
+            }
+            .tabItem { Label(StudyTab.progress.title, systemImage: StudyTab.progress.icon) }
+            .tag(StudyTab.progress)
+
+            // ⚙️ Impostazioni
+            NavigationStack {
+                SettingsView(mode: .study, onChangeMode: onChangeMode)
+                    .dmTabBar()
+            }
+            .tabItem { Label(StudyTab.settings.title, systemImage: StudyTab.settings.icon) }
+            .tag(StudyTab.settings)
         }
-        .dmScreen()
+        // la sezione scelta nella barra è viola
+        .tint(Theme.main)
         // .sheet = un foglio che sale dal basso sopra la schermata
         .sheet(isPresented: $showingAddDoubt) {
             AddDoubtSheet()
         }
     }
 
-    private func add() {
-        switch tab {
-        case .today:          showingAddExam = true
-        case .doubts, .coach: showingAddDoubt = true
-        case .progress:       break
+    /// Una sezione: intestazione in alto + il suo contenuto.
+    /// 📌 @ViewBuilder mi permette di passare il contenuto tra parentesi graffe { … },
+    /// come si fa con VStack o NavigationStack.
+    private func section<Content: View>(_ tab: StudyTab,
+                                        subtitle: String? = nil,
+                                        addLabel: String? = nil,
+                                        onAdd: @escaping () -> Void = {},
+                                        @ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            ModeHeader(mode: .study, title: tab.title, subtitle: subtitle,
+                       addLabel: addLabel, onAdd: onAdd)
+            content()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .dmScreen()
+        .dmTabBar()
     }
 }
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    StudyModeView(path: .constant(NavigationPath()))
+    StudyModeView(tab: .constant(.today), onChangeMode: {})
         .modelContainer(PreviewData.container)
 }

@@ -21,8 +21,8 @@
 //   - è un modello piccolo: ottimo per spiegare, fare domande e riformulare,
 //     ma può sbagliare sui fatti → l'app invita sempre a controllare sul libro
 //
-//  Se il modello non è disponibile, l'app mostra la sezione "In arrivo" e
-//  tutto il resto funziona normalmente (il Coach a regole non usa l'AI).
+//  Se il modello non è disponibile, il bottone "Chiedi al tutor" nei Dubbi non compare e
+//  tutto il resto funziona normalmente (i Dubbi restano una lista da portare al prof).
 //
 //  `#if canImport(FoundationModels)` = questo codice viene compilato solo se Xcode
 //  ha il framework. `@available(iOS 26.0, *)` = viene eseguito solo su iOS 26+.
