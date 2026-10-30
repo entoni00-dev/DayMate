@@ -30,10 +30,11 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
-3. **Due modi di usare l'app, scelti a ogni apertura** (come entrare "da utente" o "da titolare"): la schermata iniziale chiede sempre "Study" oppure "Plan my day".
-   - 📚 **Studio** → barra in basso: Oggi · Dubbi · Progressi · Impostazioni (+ Esame / + Dubbio)
-   - 🗓️ **Planner** → barra in basso: Giorno · Settimana · Scadenze · Impostazioni (+ Attività / + Scadenza)
-   - La modalità non viene salvata: chiudendo l'app, alla riapertura la domanda ricompare. Senza chiudere l'app si torna alla scelta da ⚙️ Impostazioni → Cambia modalità; i dati restano.
+3. **Una barra sola in basso per tutta l'app: 🏠 Home · 💬 Dubbi · 📊 Progressi · ⚙️ Impostazioni.**
+   - La **Home** è la schermata iniziale: "Study" oppure "Plan my day" (come entrare "da utente" o "da titolare"). Ogni volta che apri l'app parti da qui.
+   - 📚 **Study** si apre sopra la Home (Today, esami, "Add an exam") con "‹ Home" per tornare.
+   - 🗓️ **Plan** si apre sopra la Home con "‹ Home", il "+" e il selettore Giorno · Settimana · Scadenze.
+   - Dubbi, Progressi e Impostazioni sono sempre a un tocco, qualunque cosa tu stia facendo.
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
    - **Dubbi**: si aggiungono quando vuoi (Dubbi → + Dubbio, o dal menu ••• di un esame), non solo durante un blocco.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
@@ -87,6 +88,23 @@ Nel timer: ⏸ mette in pausa, ✓ segna il passo fatto e passa al prossimo senz
 
 ---
 
+## 🔔 Promemoria
+
+In ⚙️ Impostazioni → **Promemoria** l'utente sceglie cosa ricevere:
+
+| Promemoria | Quando | Di default |
+|---|---|---|
+| 📚 Studio | ogni giorno all'ora scelta (17:00), con il prossimo piccolo passo | acceso |
+| 🗓️ Impegni del Planner | 0 / 5 / 10 / 15 / 30 / 60 minuti prima di ogni impegno con orario | acceso, 10 min |
+| 🚩 Scadenze ed esami | il giorno prima alle 18:00 | acceso |
+| 💧 Acqua | ogni 1 / 2 / 3 ore, dalle 10 alle 21 | spento |
+
+C'è anche **"Manda una notifica di prova"**, utile in una demo. Se l'utente ha negato le notifiche, la schermata lo spiega e porta alle Impostazioni dell'iPhone, perché l'app non può richiedere il permesso una seconda volta.
+
+Come funziona (`Logic/ReminderManager.swift`): ogni volta che apri l'app, che cambiano esami o impegni o che cambi un'impostazione, i promemoria vengono cancellati e rifatti da capo con i dati di adesso. iOS permette al massimo 64 notifiche in attesa, quindi l'app programma solo i prossimi 7 giorni di impegni e i prossimi 30 di scadenze.
+
+Limite: il testo del promemoria di studio ("Il prossimo piccolo passo: …") si aggiorna quando apri l'app. Se completi un passo e non riapri l'app per giorni, il promemoria mostra ancora quello vecchio.
+
 ## 🏝️ Timer sulla schermata di blocco e nella Dynamic Island (Live Activity)
 
 Durante un blocco di studio o una pausa, il conto alla rovescia si vede **senza sbloccare il telefono**: sulla schermata di blocco e, sugli iPhone 14 Pro e successivi, nella Dynamic Island. È il senso di "Phone down, one tiny step": guardi quanto manca senza finire su Instagram.
@@ -123,19 +141,20 @@ DayMate/
 │   ├── L10n.swift                   → lingua scelta dall'utente (IT di default): tr("…", "…")
 │   ├── BlobView.swift               → la mascotte (immagini in Assets/Mascot)
 │   ├── WeekStrip.swift              → la settimana a quadratini
-│   ├── ModeHeader.swift             → intestazione delle sezioni + colori della barra in basso
+│   ├── ModeHeader.swift             → intestazione delle schermate (‹ Home, titolo, +) + colori della barra in basso
 ├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession, Doubt,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
-├── Logic/                           → piano di studio, ritmo, tutor AI, notifiche, suoni
+├── Logic/                           → piano di studio, ritmo, tutor AI, notifiche e promemoria, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
 ├── LiveActivity/                    → dati e gestione del timer sulla schermata di blocco
 └── Views/
-    ├── Onboarding/                  → schermata iniziale: Study oppure Plan my day
-    ├── Planner/                     → modalità Planner: Giorno, Settimana, Scadenze
+    ├── RootView.swift               → la barra in basso: Home · Dubbi · Progressi · Impostazioni
+    ├── Onboarding/                  → la Home: Study oppure Plan my day
+    ├── Planner/                     → Plan: Giorno, Settimana, Scadenze, "Add to your day"
     ├── Exams/                       → esami, nuovo esame, dettaglio
-    ├── Study/                       → modalità Studio + "Today"
+    ├── Study/                       → Study ("Today")
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
-    ├── Doubts/ Stats/ Settings/
+    ├── Doubts/ Stats/ Settings/     → Settings contiene anche i Promemoria
     └── Components/                  → programma della giornata, StatTile…
 ```
 

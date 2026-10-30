@@ -31,6 +31,17 @@ final class NotificationManager {
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    /// Lo stato del permesso: .authorized (sì), .denied (no), .notDetermined (non ancora chiesto)…
+    /// `async` = la risposta arriva "dopo": si chiama con `await`
+    func permissionStatus() async -> UNAuthorizationStatus {
+        await center.notificationSettings().authorizationStatus
+    }
+
+    /// Chiede il permesso e dice se l'utente ha accettato
+    func askPermission() async -> Bool {
+        (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+    }
+
     /// Programma una notifica tra `seconds` secondi, con un suono personalizzato
     func schedule(id: String, title: String, body: String, after seconds: TimeInterval, sound: AlarmSound? = nil) {
         guard AppSettings.notificationsEnabled else { return }

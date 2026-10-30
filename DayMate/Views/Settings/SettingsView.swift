@@ -7,19 +7,14 @@
 //  Impostazioni minime. Meno opzioni = meno "procrastinazione da configurazione"
 //  (sistemare le impostazioni invece di studiare è un classico!).
 //
-//  È l'ultima sezione della barra in basso, in tutte e due le modalità.
-//  Alcune impostazioni compaiono solo in una modalità (es. il ritmo di studio solo in Studio).
+//  È l'ultima sezione della barra in basso.
+//  🔔 I promemoria hanno una schermata loro: Impostazioni → Promemoria (ReminderSettingsView).
 //
 
 import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
-    /// La modalità in cui sono (Studio o Planner)
-    let mode: AppMode
-    /// Torna alla schermata iniziale per scegliere l'altra modalità
-    var onChangeMode: () -> Void
-
     // @AppStorage salva un valore semplice nelle impostazioni del telefono (UserDefaults)
     @AppStorage(AppSettings.blockMinutesKey) private var blockMinutes = AppSettings.defaultBlockMinutes
     @AppStorage(AppSettings.shortBreakKey) private var shortBreak = AppSettings.defaultShortBreak
@@ -36,35 +31,20 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // la stessa intestazione delle altre sezioni (qui senza "+")
-            ModeHeader(onHome: onChangeMode, title: tr("Settings", "Impostazioni"))
+            ModeHeader(title: tr("Settings", "Impostazioni"))
 
             Form {
-                // MARK: Modalità
+                // MARK: Promemoria
                 Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: mode.icon)
-                            .foregroundStyle(Theme.text)
-                            .frame(width: 34, height: 34)
-                            .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(tr("You're using", "Stai usando"))
-                                .font(.caption)
-                                .foregroundStyle(Theme.secondary)
-                            Text(mode.choiceTitle)
-                                .font(.headline)
-                        }
-                    }
-                    Button {
-                        Haptics.tap()
-                        onChangeMode()
+                    // NavigationLink { … } apre un'altra schermata quando tocco la riga
+                    NavigationLink {
+                        ReminderSettingsView()
                     } label: {
-                        Label(tr("Change mode", "Cambia modalità"), systemImage: "arrow.left.arrow.right")
+                        Label(tr("Reminders", "Promemoria"), systemImage: "bell.badge.fill")
                     }
-                } header: {
-                    Text(tr("Mode", "Modalità"))
                 } footer: {
-                    Text(tr("Every time you open DayMate it asks you again what you want to do. Your data stays on the phone: exams, doubts and tasks are still there when you come back.",
-                            "Ogni volta che apri DayMate ti richiede cosa vuoi fare. I tuoi dati restano sul telefono: esami, dubbi e attività ci sono ancora quando torni."))
+                    Text(tr("Choose which notifications to get: study, tasks, deadlines, water.",
+                            "Scegli quali notifiche ricevere: studio, impegni, scadenze, acqua."))
                 }
                 .listRowBackground(Theme.card)
 
@@ -83,52 +63,46 @@ struct SettingsView: View {
                 }
                 .listRowBackground(Theme.card)
 
-                if mode == .study {
-                    // MARK: Ritmo
-                    Section {
-                        Picker(tr("Study block", "Blocco di studio"), selection: $blockMinutes) {
-                            ForEach([15, 20, 25, 30, 45, 50], id: \.self) { Text("\($0) min").tag($0) }
-                        }
-                        Picker(tr("Short break", "Pausa breve"), selection: $shortBreak) {
-                            ForEach([3, 5, 10], id: \.self) { Text("\($0) min").tag($0) }
-                        }
-                        Picker(tr("Long break (every 4 blocks)", "Pausa lunga (ogni 4 blocchi)"), selection: $longBreak) {
-                            ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) min").tag($0) }
-                        }
-                    } header: {
-                        Text(tr("Study / break rhythm", "Ritmo studio / pausa"))
-                    } footer: {
-                        Text(tr("The first blocks start shorter depending on how you feel (e.g. 5 → 10 → 15 min if you're stuck) and grow up to this length. 25 + 5 minutes is the classic \"Pomodoro\": a good starting point, not a scientific rule.",
-                                "I primi blocchi partono più corti in base a come ti senti (es. 5 → 10 → 15 min se sei bloccato) e crescono fino a questa durata. 25 + 5 minuti è il classico \"Pomodoro\": un buon punto di partenza, non una regola scientifica."))
+                // MARK: Ritmo
+                Section {
+                    Picker(tr("Study block", "Blocco di studio"), selection: $blockMinutes) {
+                        ForEach([15, 20, 25, 30, 45, 50], id: \.self) { Text("\($0) min").tag($0) }
                     }
-                    .listRowBackground(Theme.card)
-                }
-                if mode == .planner {
-                    // MARK: Planner
-                    Section(tr("Planner", "Planner")) {
-                        Stepper(value: $waterGoal, in: 4...14) {
-                            Text(tr("Water goal: \(waterGoal) glasses", "Obiettivo acqua: \(waterGoal) bicchieri"))
-                        }
+                    Picker(tr("Short break", "Pausa breve"), selection: $shortBreak) {
+                        ForEach([3, 5, 10], id: \.self) { Text("\($0) min").tag($0) }
                     }
-                    .listRowBackground(Theme.card)
-                }
-                if mode == .study {
-                    // MARK: Avvisi
-                    Section {
-                        Toggle(tr("Alarm sound", "Suono di sveglia"), isOn: $soundEnabled)
-                            .tint(Theme.main)
-                        Toggle(tr("Notifications when locked", "Notifiche a schermo bloccato"), isOn: $notificationsEnabled)
-                            .tint(Theme.main)
-                        Button(tr("Try the break sound", "Prova il suono della pausa")) { SoundPlayer.shared.play(.pause, repeats: 1) }
-                        Button(tr("Try the study sound", "Prova il suono dello studio")) { SoundPlayer.shared.play(.study, repeats: 1) }
-                    } header: {
-                        Text(tr("Alerts", "Avvisi"))
-                    } footer: {
-                        Text(tr("End of block: \"Time for a break!\". End of break: \"Welcome back!\". The sound plays even with the silent switch on, like an alarm. Notifications are local: no server.",
-                                "A fine blocco: \"È tempo di una pausa!\". A fine pausa: \"Bentornato!\". Il suono si sente anche con l'interruttore silenzioso, come una sveglia. Le notifiche sono locali: nessun server."))
+                    Picker(tr("Long break (every 4 blocks)", "Pausa lunga (ogni 4 blocchi)"), selection: $longBreak) {
+                        ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) min").tag($0) }
                     }
-                    .listRowBackground(Theme.card)
+                } header: {
+                    Text(tr("Study / break rhythm", "Ritmo studio / pausa"))
+                } footer: {
+                    Text(tr("The first blocks start shorter depending on how you feel (e.g. 5 → 10 → 15 min if you're stuck) and grow up to this length. 25 + 5 minutes is the classic \"Pomodoro\": a good starting point, not a scientific rule.",
+                            "I primi blocchi partono più corti in base a come ti senti (es. 5 → 10 → 15 min se sei bloccato) e crescono fino a questa durata. 25 + 5 minuti è il classico \"Pomodoro\": un buon punto di partenza, non una regola scientifica."))
                 }
+                .listRowBackground(Theme.card)
+                // MARK: Planner
+                Section(tr("Planner", "Planner")) {
+                    Stepper(value: $waterGoal, in: 4...14) {
+                        Text(tr("Water goal: \(waterGoal) glasses", "Obiettivo acqua: \(waterGoal) bicchieri"))
+                    }
+                }
+                .listRowBackground(Theme.card)
+                // MARK: Avvisi del timer
+                Section {
+                    Toggle(tr("Alarm sound", "Suono di sveglia"), isOn: $soundEnabled)
+                        .tint(Theme.main)
+                    Toggle(tr("Notifications when locked", "Notifiche a schermo bloccato"), isOn: $notificationsEnabled)
+                        .tint(Theme.main)
+                    Button(tr("Try the break sound", "Prova il suono della pausa")) { SoundPlayer.shared.play(.pause, repeats: 1) }
+                    Button(tr("Try the study sound", "Prova il suono dello studio")) { SoundPlayer.shared.play(.study, repeats: 1) }
+                } header: {
+                    Text(tr("Timer alerts", "Avvisi del timer"))
+                } footer: {
+                    Text(tr("End of block: \"Time for a break!\". End of break: \"Welcome back!\". The sound plays even with the silent switch on, like an alarm. Notifications are local: no server.",
+                            "A fine blocco: \"È tempo di una pausa!\". A fine pausa: \"Bentornato!\". Il suono si sente anche con l'interruttore silenzioso, come una sveglia. Le notifiche sono locali: nessun server."))
+                }
+                .listRowBackground(Theme.card)
                 // MARK: Privacy
                 Section("Privacy") {
                     Label {
@@ -201,6 +175,6 @@ struct SettingsView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    NavigationStack { SettingsView(mode: .study, onChangeMode: {}) }
+    NavigationStack { SettingsView() }
         .modelContainer(PreviewData.container)
 }

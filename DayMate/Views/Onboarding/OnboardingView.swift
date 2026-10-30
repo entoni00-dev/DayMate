@@ -4,7 +4,7 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  La schermata iniziale (00 Start di Sketch):
+//  La Home, cioè la schermata iniziale (00 Start di Sketch), prima sezione della barra in basso:
 //
 //            ◯ ◯ (Blob) ◯ ◯
 //              DayMate
@@ -12,11 +12,13 @@
 //
 //   [📖 Study · start a tiny step ]    ← viola: è la scelta consigliata
 //   [📅 Plan my day               ]
+//   ─────────────────────────────────
+//    🏠 Home  💬 Dubbi  📊 Progressi  ⚙️ Impostazioni
 //
 //  Qui si sceglie come usare l'app (come entrare "da utente" o "da titolare").
-//  Compare OGNI volta che apri l'app: la domanda "cosa vuoi fare oggi?" è voluta,
-//  perché un giorno studi e un altro organizzi la giornata.
-//  Da dentro l'app si torna qui con Impostazioni → "Cambia modalità".
+//  È la prima cosa che vedi OGNI volta che apri l'app: la domanda "cosa vuoi fare oggi?"
+//  è voluta, perché un giorno studi e un altro organizzi la giornata.
+//  Study e Plan si aprono "sopra" la Home: con "‹ Home" (o lo swipe) si torna qui.
 //
 
 import SwiftUI
@@ -44,7 +46,8 @@ struct OnboardingView: View {
 
             Spacer(minLength: 10)
 
-            GlowRings(size: typeSize.isAccessibilitySize ? 170 : 300, strongOuterRing: true) {
+            // 270 invece dei 300 di Sketch: sotto adesso c'è anche la barra delle sezioni
+            GlowRings(size: typeSize.isAccessibilitySize ? 160 : 270, strongOuterRing: true) {
                 BlobView(pose: .hello)
             }
 

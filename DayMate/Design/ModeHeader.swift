@@ -4,16 +4,14 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  L'intestazione in cima a ogni sezione delle due modalità:
+//  L'intestazione in cima alle schermate principali:
 //
 //   ‹ Home                                    (+)
 //   Study
 //   Thursday 29 October
 //
-//  Le sezioni (Oggi, Dubbi, Progressi…) adesso stanno nella barra IN BASSO:
-//  è la TabView di Apple, quella che hanno quasi tutte le app per iPhone.
-//  Qui sopra resta solo "‹ Home" (torna alla schermata iniziale), il titolo
-//  e il "+" per aggiungere qualcosa, come nelle schermate di Sketch.
+//  "‹ Home" c'è solo in Study e Plan (che si aprono dalla Home); il "+" solo dove
+//  c'è qualcosa da aggiungere. Le sezioni stanno nella barra IN BASSO (vedi RootView).
 //
 //  Per la barra in basso c'è anche un piccolo aiuto: .dmTabBar() (in fondo al file).
 //
@@ -21,8 +19,8 @@
 import SwiftUI
 
 struct ModeHeader: View {
-    /// "‹ Home": torna alla schermata iniziale (Study / Plan my day)
-    var onHome: () -> Void
+    /// true = mostra "‹ Home" in alto a sinistra (in Study e Plan, che si aprono dalla Home)
+    var showsHomeLink = false
     /// Il titolo grande (il nome della sezione aperta, es. "Today")
     let title: String
     var subtitle: String? = nil
@@ -34,7 +32,10 @@ struct ModeHeader: View {
         VStack(alignment: .leading, spacing: 8) {
             // Riga 1: "‹ Home" a sinistra, il "+" a destra
             HStack(spacing: 10) {
-                TopLink(title: "Home", showsChevron: true, action: onHome)
+                if showsHomeLink {
+                    // senza "action" il TopLink torna indietro da solo (dismiss), cioè alla Home
+                    TopLink(title: "Home", showsChevron: true)
+                }
 
                 Spacer()
 
@@ -71,6 +72,6 @@ extension View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    ModeHeader(onHome: {}, title: "Study", subtitle: Date.now.longDayText)
+    ModeHeader(showsHomeLink: true, title: "Study", subtitle: Date.now.longDayText)
         .background(Theme.background)
 }
