@@ -31,9 +31,9 @@ Requisiti: **iOS 17+**. Nessuna intelligenza artificiale: tutto funziona con reg
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
 3. **Due modi di usare l'app, scelti nella Home** (come entrare "da utente" o "da titolare"). La barra in basso ha sempre 🏠 Home all'inizio e ⚙️ Impostazioni alla fine; in mezzo, le sezioni della modalità scelta:
-   - 📚 **Studio** → 🏠 Home · ☀️ Oggi · 📊 Progressi · ⚙️ Impostazioni
+   - 📚 **Studio** → 🏠 Home · 📊 Progressi · ⚙️ Impostazioni (3 bottoni). "Study" nella Home apre la schermata di oggi sopra la Home, con "‹ Home" per tornare.
    - 🗓️ **Planner** → 🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
-   - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; "‹ Home" in Oggi e in Plan riporta qui.
+   - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; "‹ Home" in Study e in Plan riporta qui.
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
 5. **Planner**: settimana, STUDY (passi d'esame del giorno + attività di studio), DUTIES & FREE TIME con orario, acqua. "Add to your day" con tipo (Studio / Impegno / Tempo libero), ora, durata e "È una scadenza".
@@ -152,7 +152,7 @@ DayMate/
     ├── Onboarding/                  → la Home: Study oppure Plan my day
     ├── Planner/                     → Giorno (Plan), Settimana, Scadenze, "Add to your day"
     ├── Exams/                       → esami, nuovo esame, dettaglio
-    ├── Study/                       → Oggi (la schermata "Study" di Sketch)
+    ├── Study/                       → la schermata "Study" di Sketch (si apre dalla Home)
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
     ├── Stats/ Settings/             → Progressi, Impostazioni e Promemoria
     └── Components/                  → programma della giornata, StatTile…

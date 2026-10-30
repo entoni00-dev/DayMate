@@ -9,12 +9,14 @@
 //  🧭 La barra ha SEMPRE la Home all'inizio e le Impostazioni alla fine.
 //  In mezzo ci sono le sezioni della modalità scelta (come entrare "da utente" o "da titolare"):
 //
-//   📚 STUDIO   🏠 Home · ☀️ Oggi   · 📊 Progressi · ⚙️ Impostazioni
+//   📚 STUDIO   🏠 Home · 📊 Progressi · ⚙️ Impostazioni
 //   🗓️ PLANNER  🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
 //
 //  🏠 Home = la schermata iniziale "Study / Plan my day". Ogni volta che apri l'app
-//  parti da qui: tocchi "Study" e la barra diventa quella dello Studio, tocchi
-//  "Plan my day" e diventa quella del Planner. Per cambiare: si torna in Home.
+//  parti da qui:
+//   - "Study" apre la schermata di oggi SOPRA la Home (con "‹ Home" per tornare)
+//     e la barra diventa quella dello Studio (3 bottoni)
+//   - "Plan my day" apre la sezione Giorno e la barra diventa quella del Planner
 //
 //  📌 Nota per me: se esco dall'app con il tasto Home e rientro subito, iOS la tiene
 //  ancora aperta in memoria e ritrovo la schermata dov'ero. Ed è giusto: se stavo
@@ -27,14 +29,13 @@ import SwiftData
 /// Tutte le sezioni possibili della barra (quali si vedono dipende dalla modalità)
 enum AppTab: Hashable {
     case home
-    case today, progress                  // 📚 Studio
+    case progress                         // 📚 Studio (la schermata di oggi si apre dalla Home)
     case day, week, deadlines             // 🗓️ Planner
     case settings
 
     var title: String {
         switch self {
         case .home:      return "Home"
-        case .today:     return tr("Today", "Oggi")
         case .progress:  return tr("Progress", "Progressi")
         case .day:       return tr("Day", "Giorno")
         case .week:      return tr("Week", "Settimana")
@@ -46,7 +47,6 @@ enum AppTab: Hashable {
     var icon: String {
         switch self {
         case .home:      return "house.fill"
-        case .today:     return "sun.max.fill"
         case .progress:  return "chart.bar.fill"
         case .day:       return "checklist"
         case .week:      return "calendar"
@@ -60,6 +60,8 @@ struct RootView: View {
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     /// La sezione aperta: all'apertura dell'app è sempre la Home
     @State private var tab: AppTab = .home
+    /// Le schermate aperte sopra la Home (vuoto = la scelta Study / Plan my day)
+    @State private var homePath = NavigationPath()
     /// Il giorno scelto nel Planner (condiviso da Giorno, Settimana e Scadenze)
     @State private var plannerDay = Calendar.current.startOfDay(for: .now)
     @State private var showingAddTask = false
@@ -88,7 +90,6 @@ struct RootView: View {
 
             // Le sezioni in mezzo cambiano con la modalità
             if mode == .study {
-                todayTab
                 progressTab
             } else {
                 dayTab
@@ -124,35 +125,36 @@ struct RootView: View {
     // MARK: - 🏠 Home
 
     private var homeTab: some View {
-        NavigationStack {
+        // NavigationStack(path:) = una pila di schermate; homePath dice quali sono aperte
+        NavigationStack(path: $homePath) {
             OnboardingView(currentMode: mode) { chosen in
                 // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
                 withAnimation(.easeInOut) {
                     modeRaw = chosen.rawValue
-                    // e apro la prima sezione della modalità scelta
-                    tab = chosen == .study ? .today : .day
+                }
+                if chosen == .study {
+                    // aggiungere .study alla pila = "apri la schermata di oggi sopra la Home"
+                    homePath.append(AppMode.study)
+                } else {
+                    tab = .day
                 }
             }
             .dmScreen()
             .dmTabBar()
+            // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
+            .navigationDestination(for: AppMode.self) { _ in
+                // "‹ Home" svuota la pila: si torna alla scelta
+                StudyHomeView(onHome: { homePath = NavigationPath() })
+            }
+            .navigationDestination(for: Exam.self) { exam in
+                ExamDetailView(exam: exam)
+            }
         }
         .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.icon) }
         .tag(AppTab.home)
     }
 
     // MARK: - 📚 Studio
-
-    private var todayTab: some View {
-        NavigationStack {
-            StudyHomeView(onHome: goHome)
-                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
-                .navigationDestination(for: Exam.self) { exam in
-                    ExamDetailView(exam: exam)
-                }
-        }
-        .tabItem { Label(AppTab.today.title, systemImage: AppTab.today.icon) }
-        .tag(AppTab.today)
-    }
 
     private var progressTab: some View {
         NavigationStack {
@@ -241,8 +243,9 @@ struct RootView: View {
         .dmTabBar()
     }
 
-    /// "‹ Home": apre la prima sezione della barra
+    /// "‹ Home" nel Planner: apre la prima sezione della barra (e chiude Study, se era aperto)
     private func goHome() {
+        homePath = NavigationPath()
         withAnimation(.easeInOut) { tab = .home }
     }
 

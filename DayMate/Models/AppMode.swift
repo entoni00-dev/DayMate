@@ -7,7 +7,7 @@
 //  🔀 I due modi di usare DayMate, scelti nella Home OGNI volta che apri l'app
 //  (un po' come entrare "da utente" o "da titolare" in altre app):
 //
-//   📚 study   → barra: Home · Oggi   · Progressi · Impostazioni
+//   📚 study   → barra: Home · Progressi · Impostazioni ("Study" apre la schermata di oggi)
 //   🗓️ planner → barra: Home · Giorno · Settimana · Scadenze  · Impostazioni
 //
 //  Salvo solo l'ULTIMA modalità scelta, per sapere quali sezioni mettere nella barra
