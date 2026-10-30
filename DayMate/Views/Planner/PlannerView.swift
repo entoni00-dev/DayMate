@@ -63,10 +63,6 @@ struct PlannerView: View {
             VStack(alignment: .leading, spacing: 12) {
                 WeekStrip(selected: $day, marked: exams.map(\.date))
 
-                // 💡 Suggerimento di TipKit
-                TipView(PlannerTip())
-                    .tint(Theme.main)
-
                 // STUDY
                 SectionHeader(text: tr("Study", "Studio"))
                 listCard {
@@ -101,6 +97,10 @@ struct PlannerView: View {
                 // WATER
                 SectionHeader(text: tr("Water", "Acqua"))
                 waterRow
+
+                // 💡 Suggerimento di TipKit (in fondo: è un extra rispetto a Sketch)
+                TipView(PlannerTip())
+                    .tint(Theme.main)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 30)

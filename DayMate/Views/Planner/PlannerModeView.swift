@@ -6,9 +6,9 @@
 //
 //  🗓️ La modalità Planner: si apre quando nella schermata iniziale tocchi "Plan my day".
 //
-//   [📅 Planner]                      (+)
+//   ‹ Home                            (+)
 //   Plan
-//   Thursday 29 October
+//   M T W [T] F S S                   ← la settimana (il giorno scelto è viola)
 //   …contenuto della sezione…
 //   ─────────────────────────────────────
 //    ✅ Giorno   📅 Settimana   🚩 Scadenze   ⚙️ Impostazioni     ← barra in basso (TabView)
@@ -74,7 +74,8 @@ struct PlannerModeView: View {
         TabView(selection: $tab) {
             // ✅ Giorno
             NavigationStack {
-                section(.day, subtitle: day.longDayText) {
+                // come in Sketch: niente data sotto "Plan", la mostra già la settimana
+                section(.day) {
                     PlannerView(day: $day)
                 }
                 .navigationDestination(for: Exam.self) { exam in
@@ -130,7 +131,7 @@ struct PlannerModeView: View {
                                         subtitle: String? = nil,
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            ModeHeader(mode: .planner, title: tab.title, subtitle: subtitle,
+            ModeHeader(onHome: onChangeMode, title: tab.title, subtitle: subtitle,
                        addLabel: tr("Add to your day", "Aggiungi alla giornata"),
                        onAdd: { showingAddTask = true })
             content()
@@ -487,13 +488,9 @@ struct AddTaskSheet: View {
                     }
                 }
 
-                // WHEN: giorno, ora, durata
+                // WHEN: ora e durata come in Sketch; poi, in più, giorno e "scadenza"
                 SectionHeader(text: tr("When", "Quando"))
                 VStack(spacing: 0) {
-                    DatePicker(tr("Day", "Giorno"), selection: $day, displayedComponents: .date)
-                        .padding(.horizontal, 18)
-                        .frame(height: 54)
-                    Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
                     DatePicker(tr("Time", "Ora"), selection: $time, displayedComponents: .hourAndMinute)
                         .padding(.horizontal, 18)
                         .frame(height: 54)
@@ -508,6 +505,11 @@ struct AddTaskSheet: View {
                     }
                     .padding(.horizontal, 18)
                     .frame(height: 54)
+                    Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
+                    // extra rispetto a Sketch: il giorno (di default quello aperto nel Planner)
+                    DatePicker(tr("Day", "Giorno"), selection: $day, displayedComponents: .date)
+                        .padding(.horizontal, 18)
+                        .frame(height: 54)
                     Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
                     Toggle(isOn: $isDeadline) {
                         Label(tr("It's a deadline", "È una scadenza"), systemImage: "flag.fill")

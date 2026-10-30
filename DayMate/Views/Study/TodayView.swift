@@ -6,13 +6,19 @@
 //
 //  "Today" (schermata 01 di Sketch) — la prima sezione della modalità Studio.
 //
+//   ‹ Home
+//   Study
+//   Thursday 29 October
 //   ┌ NEXT TINY STEP ───────────────┐
 //   │ Read Ch. 2               (Blob)│   ← il passo più vicino: un tocco e si parte
 //   │ Math · step 3 of 6             │
-//   │ [▶ Start · 15 min]             │
+//   │ [▶ Start · 5 min]              │
 //   └────────────────────────────────┘
+//   [ Add an exam                 ⊕ ]   ← il grande bottone viola
 //   YOUR EXAMS   Math · Physics …       ← tocco un esame per il dettaglio
-//   PLAN         passi di oggi, impegni, acqua   ← collegato al Planner!
+//
+//  In fondo, piccolo, il piano di oggi (passi, impegni, acqua): non è in Sketch,
+//  ma collega la modalità Studio al Planner.
 //
 
 import SwiftUI
@@ -27,7 +33,7 @@ struct TodayView: View {
     // modelContext = il "quaderno" di SwiftData: lo uso per inserire ed eliminare dati
     @Environment(\.modelContext) private var context
 
-    /// Cosa fare quando non ci sono esami e l'utente tocca "Aggiungi"
+    /// Cosa fare quando l'utente tocca "Add an exam"
     var onAddExam: () -> Void
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
@@ -63,18 +69,23 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 14) {
                 nextStepCard
 
-                // 💡 Suggerimento di TipKit (sparisce quando l'utente lo chiude)
-                if nextExam != nil {
-                    TipView(TinyStepTip())
-                        .tint(Theme.main)
-                }
+                // Il grande bottone viola di Sketch
+                BigAddButton(title: tr("Add an exam", "Aggiungi un esame"), action: onAddExam)
+                    .padding(.top, 14)
 
                 if !exams.isEmpty {
                     SectionHeader(text: tr("Your exams", "I tuoi esami"))
                     examsList
                 }
 
-                SectionHeader(text: tr("Plan", "Piano di oggi"))
+                // 💡 Suggerimento di TipKit (sparisce quando l'utente lo chiude)
+                if nextExam != nil {
+                    TipView(TinyStepTip())
+                        .tint(Theme.main)
+                }
+
+                // Il piano di oggi: un extra rispetto a Sketch, quindi in fondo
+                SectionHeader(text: tr("Today's plan", "Piano di oggi"))
                 planList
             }
             .padding(.horizontal, 20)
@@ -139,11 +150,6 @@ struct TodayView: View {
                          : tr("No steps left. Rest, you earned it.", "Nessun passo rimasto. Riposati, te lo sei meritato."))
                         .font(.subheadline)
                         .foregroundStyle(Theme.secondary)
-                    if exams.isEmpty {
-                        Button(tr("New exam", "Nuovo esame"), action: onAddExam)
-                            .buttonStyle(SmallButtonStyle())
-                            .padding(.top, 4)
-                    }
                 }
                 Spacer(minLength: 0)
             }

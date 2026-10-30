@@ -288,15 +288,19 @@ struct ProgressRingView: View {
     }
 }
 
-/// I cerchi concentrici verdi e tenui dietro il Blob (schermata iniziale, "Welcome back!")
+/// I cerchi concentrici dietro il Blob (schermata iniziale, "Welcome back!")
 struct GlowRings<Content: View>: View {
     var size: CGFloat = 300
+    /// true = l'anello esterno è spesso e blu-viola, come nella schermata iniziale di Sketch
+    var strongOuterRing = false
     // @ViewBuilder: dentro { } posso mettere la vista da mostrare al centro
     @ViewBuilder var content: () -> Content
 
     var body: some View {
         ZStack {
-            Circle().stroke(Theme.accent.opacity(0.18), lineWidth: 1.5)
+            // l'anello esterno: spesso e blu-viola (Start) oppure sottile e tenue (le altre)
+            Circle().stroke(strongOuterRing ? Theme.ring : Theme.accent.opacity(0.18),
+                            lineWidth: strongOuterRing ? 6 : 1.5)
                 .frame(width: size, height: size)
             Circle().stroke(Theme.accent.opacity(0.45), lineWidth: 1.5)
                 .frame(width: size * 0.77, height: size * 0.77)
@@ -306,6 +310,37 @@ struct GlowRings<Content: View>: View {
                 .frame(width: size * 0.42, height: size * 0.42)
         }
         .frame(width: size, height: size)
+    }
+}
+
+/// Il grande bottone viola "Add an exam ⊕" della schermata Today
+struct BigAddButton: View {
+    let title: String
+    var action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            HStack {
+                Text(title)
+                    .font(.system(.title2, weight: .bold))
+                    .foregroundStyle(Theme.background)
+                Spacer()
+                // il "+" dentro un cerchio scuro, a destra
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 34, height: 34)
+                    .background(Theme.background, in: Circle())
+            }
+            .padding(.horizontal, 20)
+            .frame(height: 68)
+            .background(Theme.main, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

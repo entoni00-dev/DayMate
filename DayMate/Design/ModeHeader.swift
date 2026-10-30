@@ -6,13 +6,14 @@
 //
 //  L'intestazione in cima a ogni sezione delle due modalità:
 //
-//   [📖 Studio]                               (+)
-//   Today
+//   ‹ Home                                    (+)
+//   Study
 //   Thursday 29 October
 //
 //  Le sezioni (Oggi, Dubbi, Progressi…) adesso stanno nella barra IN BASSO:
 //  è la TabView di Apple, quella che hanno quasi tutte le app per iPhone.
-//  Qui sopra resta solo il titolo e il "+" per aggiungere qualcosa.
+//  Qui sopra resta solo "‹ Home" (torna alla schermata iniziale), il titolo
+//  e il "+" per aggiungere qualcosa, come nelle schermate di Sketch.
 //
 //  Per la barra in basso c'è anche un piccolo aiuto: .dmTabBar() (in fondo al file).
 //
@@ -20,7 +21,8 @@
 import SwiftUI
 
 struct ModeHeader: View {
-    let mode: AppMode
+    /// "‹ Home": torna alla schermata iniziale (Study / Plan my day)
+    var onHome: () -> Void
     /// Il titolo grande (il nome della sezione aperta, es. "Today")
     let title: String
     var subtitle: String? = nil
@@ -29,15 +31,10 @@ struct ModeHeader: View {
     var onAdd: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Riga 1: la modalità a sinistra, il "+" a destra
+        VStack(alignment: .leading, spacing: 8) {
+            // Riga 1: "‹ Home" a sinistra, il "+" a destra
             HStack(spacing: 10) {
-                Label(mode.title, systemImage: mode.icon)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Theme.lightMain)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Theme.card, in: Capsule())
+                TopLink(title: "Home", showsChevron: true, action: onHome)
 
                 Spacer()
 
@@ -74,7 +71,6 @@ extension View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    ModeHeader(mode: .study, title: "Today", subtitle: Date.now.longDayText,
-               addLabel: "New exam")
+    ModeHeader(onHome: {}, title: "Study", subtitle: Date.now.longDayText)
         .background(Theme.background)
 }

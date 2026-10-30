@@ -37,7 +37,7 @@ struct OnboardingView: View {
 
             Spacer(minLength: 10)
 
-            GlowRings(size: 300) {
+            GlowRings(size: 300, strongOuterRing: true) {
                 BlobView(pose: .hello)
             }
 

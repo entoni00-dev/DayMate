@@ -6,7 +6,7 @@
 //
 //  "New exam" (schermata 03 di Sketch):
 //
-//   Cancel                            Save
+//   Cancel
 //   New exam
 //   SUBJECT      [ Math              ]
 //   EXAM DATE    [ 12 November 2026 📅]
@@ -14,6 +14,7 @@
 //                ○ Exercises 1–5      ≡
 //                + Add a tiny step
 //   (Blob) Keep steps small: 10–25 minutes each works best
+//           [  Save  ]                    ← il grande bottone viola in fondo
 //
 //  I passi li scrivo io, uno per riga, e li riordino trascinando ≡.
 //  Se non so da dove partire c'è "✨ Create the steps for me": dico argomenti, pagine e
@@ -61,14 +62,10 @@ struct AddExamView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Riga in alto: Cancel a sinistra, Save a destra
+            // Riga in alto: solo Cancel (Save è il bottone grande in fondo, come in Sketch)
             HStack {
                 TopLink(title: tr("Cancel", "Annulla"))
                 Spacer()
-                TopLink(title: tr("Save", "Salva"), bold: true,
-                        color: canSave ? Theme.main : Theme.secondary.opacity(0.5),
-                        action: save)
-                    .disabled(!canSave)
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -150,6 +147,19 @@ struct AddExamView: View {
             .scrollContentBackground(.hidden)   // tolgo lo sfondo grigio del Form
             // il Form sempre "in modifica": così si vedono le maniglie ≡ per riordinare
             .environment(\.editMode, .constant(.active))
+        }
+        // .safeAreaInset(edge: .bottom) tiene il bottone sempre visibile in fondo,
+        // anche quando la lista scorre
+        .safeAreaInset(edge: .bottom) {
+            Button(action: save) {
+                Text(tr("Save", "Salva"))
+                    .font(.system(.title2, weight: .bold))
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!canSave)          // grigio finché manca il nome o un passo
+            .padding(.horizontal, 48)
+            .padding(.vertical, 8)
+            .background(Theme.background)
         }
         .dmScreen()
         .sheet(isPresented: $showingGenerator) {

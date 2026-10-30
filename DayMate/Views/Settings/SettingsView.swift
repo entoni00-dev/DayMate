@@ -36,7 +36,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // la stessa intestazione delle altre sezioni (qui senza "+")
-            ModeHeader(mode: mode, title: tr("Settings", "Impostazioni"))
+            ModeHeader(onHome: onChangeMode, title: tr("Settings", "Impostazioni"))
 
             Form {
                 // MARK: Modalità

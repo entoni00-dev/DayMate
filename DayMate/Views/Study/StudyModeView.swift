@@ -6,8 +6,8 @@
 //
 //  📚 La modalità Studio: si apre quando nella schermata iniziale tocchi "Study".
 //
-//   [📖 Studio]                       (+)
-//   Today
+//   ‹ Home                            (+)
+//   Study
 //   Thursday 29 October
 //   …contenuto della sezione…
 //   ─────────────────────────────────────
@@ -65,8 +65,9 @@ struct StudyModeView: View {
         TabView(selection: $tab) {
             // ☀️ Oggi
             NavigationStack {
-                section(.today, subtitle: Date.now.longDayText,
-                        addLabel: tr("New exam", "Nuovo esame"), onAdd: { showingAddExam = true }) {
+                // in Sketch il titolo di questa schermata è "Study" e al posto del "+"
+                // c'è il grande bottone "Add an exam" (dentro TodayView)
+                section(.today, title: tr("Study", "Studio"), subtitle: Date.now.longDayText) {
                     TodayView(onAddExam: { showingAddExam = true })
                 }
                 // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
@@ -120,12 +121,14 @@ struct StudyModeView: View {
     /// 📌 @ViewBuilder mi permette di passare il contenuto tra parentesi graffe { … },
     /// come si fa con VStack o NavigationStack.
     private func section<Content: View>(_ tab: StudyTab,
+                                        title: String? = nil,
                                         subtitle: String? = nil,
                                         addLabel: String? = nil,
                                         onAdd: @escaping () -> Void = {},
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            ModeHeader(mode: .study, title: tab.title, subtitle: subtitle,
+            // title ?? tab.title = "usa il titolo che mi passi, altrimenti il nome della sezione"
+            ModeHeader(onHome: onChangeMode, title: title ?? tab.title, subtitle: subtitle,
                        addLabel: addLabel, onAdd: onAdd)
             content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -49,6 +49,8 @@ enum Theme {
 
     /// Arancione tenue solo per gli avvisi (es. "il piano è stretto")
     static let warning    = Color(hex: 0xFFB86B)
+    /// Il blu-viola dell'anello grande nella schermata iniziale (00 Start)
+    static let ring       = Color(hex: 0x5E60E0)
 }
 
 // MARK: - Caratteri
