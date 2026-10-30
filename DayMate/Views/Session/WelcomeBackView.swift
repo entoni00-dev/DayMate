@@ -27,19 +27,25 @@ struct WelcomeBackView: View {
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var appeared = false
+    // ♿️ @ScaledMetric: il titolo cresce con la dimensione del testo scelta dall'utente
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 32
+    @Environment(\.dynamicTypeSize) private var typeSize
+    // ♿️ true se l'utente ha attivato "Riduci movimento": niente animazioni a molla
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
 
-            GlowRings(size: 290) {
+            GlowRings(size: typeSize.isAccessibilitySize ? 160 : 290) {
                 BlobView(pose: .hello)
             }
             .scaleEffect(appeared ? 1 : 0.85)
             .opacity(appeared ? 1 : 0)
 
             Text(tr("Welcome back!", "Bentornato!"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: titleSize, weight: .bold))
+                .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.text)
             Text(tr("Ready for the next tiny step?", "Pronto per il prossimo piccolo passo?"))
                 .font(.callout)
@@ -94,7 +100,11 @@ struct WelcomeBackView: View {
         .padding(.bottom, 8)
         .onAppear {
             // withAnimation: il Blob "entra" con un piccolo rimbalzo
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appeared = true }
+            if reduceMotion {
+                appeared = true          // compare e basta, senza "rimbalzo"
+            } else {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appeared = true }
+            }
             Haptics.alarm()
             SoundPlayer.shared.play(.study)
         }

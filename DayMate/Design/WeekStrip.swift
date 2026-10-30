@@ -43,6 +43,10 @@ struct WeekStrip: View {
             }
         }
         .contentShape(Rectangle())
+        // ♿️ 7 quadratini devono stare in una riga: oltre la dimensione "XXXL" non ci starebbero.
+        // Il testo cresce fino a lì; per chi usa caratteri ancora più grandi ogni giorno
+        // ha comunque la sua etichetta per VoiceOver (vedi .accessibilityLabel sotto).
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         // Swipe per cambiare settimana
         .gesture(
             // DragGesture = il dito che trascina
@@ -75,7 +79,7 @@ struct WeekStrip: View {
                     .frame(width: 5, height: 5)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 64)
+            .frame(minHeight: 64)
             .background(isSelected ? Theme.main : Theme.card,
                         in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }

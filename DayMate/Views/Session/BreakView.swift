@@ -63,6 +63,7 @@ struct BreakView: View {
             countdown.stop()
             SoundPlayer.shared.stop()
             NotificationManager.shared.cancel(id: NotificationManager.breakID)
+            LiveActivityManager.shared.end(isBreak: true)
         }
     }
 
@@ -118,7 +119,13 @@ struct BreakView: View {
                 Button(tr("Start my break", "Inizio la pausa")) {
                     Haptics.success()
                     SoundPlayer.shared.stop()
-                    withAnimation { running = selected ?? suggestions.first }
+                    let chosen = selected ?? suggestions.first
+                    withAnimation { running = chosen }
+                    // 🏝️ sulla schermata di blocco compare l'attività scelta (es. "Short walk")
+                    if let chosen {
+                        LiveActivityManager.shared.changeStep(title: chosen.title,
+                                                              subtitle: tr("Break time", "Pausa"))
+                    }
                 }
                 .buttonStyle(PrimaryButtonStyle())
 
@@ -220,6 +227,13 @@ struct BreakView: View {
         }
         countdown.start(seconds: seconds)
         NotificationManager.shared.scheduleBackToStudy(after: seconds)
+        // 🏝️ la pausa sulla schermata di blocco: così vedi quanto manca senza sbloccare
+        LiveActivityManager.shared.start(examName: "",
+                                         title: tr("Break time", "Pausa"),
+                                         subtitle: "\(minutes) min",
+                                         footer: tr("Away from the screen.", "Lontano dallo schermo."),
+                                         isBreak: true,
+                                         seconds: seconds)
     }
 
     private func endEarly(real: Bool) {

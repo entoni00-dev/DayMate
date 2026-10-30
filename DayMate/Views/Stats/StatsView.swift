@@ -12,7 +12,11 @@
 //    L'app lavora sull'iniziare: è quello che voglio rinforzare.
 //  - Giorni attivi invece di "streak": le streak si rompono e quando si rompono
 //    fanno sentire in colpa (proprio il circolo vizioso che voglio evitare).
-//  - Umore prima/dopo: la prova che iniziare abbassa l'ansia.
+//  - Umore prima/dopo: un buon SEGNALE che iniziare abbassa l'ansia, non una prova.
+//    📌 Nota per me (onestà): se mi sento meglio dopo lo studio, non so se è merito
+//    dello studio. Magari quel giorno ero già più tranquillo, o ho fatto il check-out
+//    solo nelle sessioni andate bene (chi molla a metà non lo fa). È una correlazione,
+//    quindi i testi dicono "ti sentivi meglio", non "studiare ti fa stare meglio".
 //
 
 import SwiftUI
@@ -26,6 +30,9 @@ struct StatsView: View {
 
     /// true = mostrata dentro lo spazio Studio
     var embedded = false
+
+    // ♿️ il numero grande cresce con la dimensione del testo scelta dall'utente
+    @ScaledMetric(relativeTo: .largeTitle) private var bigNumberSize: CGFloat = 44
 
     // MARK: - Dati calcolati
 
@@ -83,7 +90,7 @@ struct StatsView: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], spacing: 12) {
                     StatTile(icon: "timer", value: "\(totalFocusMinutes)", label: tr("minutes of study", "minuti di studio"))
                     StatTile(icon: "checkmark.circle", value: "\(completedSteps)", label: tr("tiny steps done", "piccoli passi fatti"))
-                    StatTile(icon: "figure.walk", value: "\(realBreaks)", label: tr("breaks without phone", "pause senza telefono"))
+                    StatTile(icon: "figure.walk", value: "\(realBreaks)", label: tr("breaks you marked phone-free", "pause segnate senza telefono"))
                     StatTile(icon: "calendar", value: "\(activeDays)", label: tr("days you started", "giorni in cui hai iniziato"))
                 }
 
@@ -112,7 +119,7 @@ struct StatsView: View {
                     .font(.headline)
                     .foregroundStyle(Theme.text.opacity(0.85))
                 Text(sessions.count == 1 ? tr("1 time", "1 volta") : tr("\(sessions.count) times", "\(sessions.count) volte"))
-                    .font(.system(size: 44, weight: .heavy))
+                    .font(.system(size: bigNumberSize, weight: .heavy))
                     .foregroundStyle(Theme.accent)
                     .contentTransition(.numericText())
                 Text(sessions.isEmpty
@@ -162,11 +169,16 @@ struct StatsView: View {
         return HStack(alignment: .top, spacing: 14) {
             Text("💚").font(.largeTitle)
             VStack(alignment: .leading, spacing: 4) {
-                Text(tr("Starting is good for you", "Iniziare ti fa bene"))
+                Text(tr("Before and after", "Prima e dopo"))
                     .font(.dmRowTitle)
                     .foregroundStyle(Theme.text)
                 Text(tr("In \(percent)% of sessions (\(stats.improved) of \(stats.total)) you felt better at the end than when you started.",
                         "Nel \(percent)% delle sessioni (\(stats.improved) su \(stats.total)) alla fine ti sentivi meglio di quando hai iniziato."))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondary)
+                // Detto onestamente: è un segnale, non una prova
+                Text(tr("It doesn't prove the studying did it, but it's a good sign.",
+                        "Non prova che sia merito dello studio, ma è un buon segno."))
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondary)
             }

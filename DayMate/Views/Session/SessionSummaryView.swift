@@ -28,7 +28,7 @@ struct SessionSummaryView: View {
             return tr("You started. That was the hardest part.", "Hai iniziato. Era la parte più difficile.")
         }
         if after.level < session.moodBefore.level {
-            return tr("Did you notice? After starting you feel better than before. Remember it next time you feel stuck.",
+            return tr("Did you notice? This time, after starting you felt better than before. Remember it next time you feel stuck.",
                       "Hai notato? Dopo aver iniziato ti senti meglio di prima. Ricordatelo la prossima volta che ti senti bloccato.")
         } else if after.level == session.moodBefore.level {
             return tr("Same mood, but in the meantime you did something real. That counts.",

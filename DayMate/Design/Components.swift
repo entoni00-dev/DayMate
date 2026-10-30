@@ -66,7 +66,9 @@ struct SmallButtonStyle: ButtonStyle {
             .font(.subheadline.weight(.bold))
             .foregroundStyle(Theme.background)
             .padding(.horizontal, 18)
-            .frame(height: 40)
+            .padding(.vertical, 8)
+            // minHeight invece di height: con il testo grande (Dynamic Type) il bottone cresce
+            .frame(minHeight: 40)
             .background(color, in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.spring(response: 0.3), value: configuration.isPressed)
@@ -266,6 +268,17 @@ struct CheckCircle: View {
             }
         }
         .frame(width: 24, height: 24)
+        // ♿️ VoiceOver non "vede" i colori: gli dico a parole com'è il passo
+        .accessibilityElement()
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var accessibilityText: String {
+        switch state {
+        case .done: return tr("Done", "Fatto")
+        case .next: return tr("Next", "Prossimo")
+        case .todo: return tr("To do", "Da fare")
+        }
     }
 }
 
@@ -285,6 +298,10 @@ struct ProgressRingView: View {
                 .rotationEffect(.degrees(-90))                         // parte da "ore 12" invece che da "ore 3"
                 .animation(.easeInOut(duration: 0.5), value: progress)
         }
+        // ♿️ per VoiceOver l'anello diventa "Progressi, 50%"
+        .accessibilityElement()
+        .accessibilityLabel(tr("Progress", "Progressi"))
+        .accessibilityValue("\(Int((max(0, min(1, progress)) * 100).rounded()))%")
     }
 }
 
@@ -336,7 +353,8 @@ struct BigAddButton: View {
                     .background(Theme.background, in: Circle())
             }
             .padding(.horizontal, 20)
-            .frame(height: 68)
+            .padding(.vertical, 12)
+            .frame(minHeight: 68)
             .background(Theme.main, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .contentShape(Rectangle())
         }

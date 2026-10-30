@@ -238,6 +238,8 @@ final class StudySessionModel {
             context?.delete(session)
         }
         NotificationManager.shared.cancelAll()
+        LiveActivityManager.shared.end(isBreak: false)
+        LiveActivityManager.shared.end(isBreak: true)
         SoundPlayer.shared.stop()
     }
 

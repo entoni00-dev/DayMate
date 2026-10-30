@@ -192,6 +192,8 @@ struct PlannerView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tr("Glass \(index + 1)", "Bicchiere \(index + 1)"))
+                // ♿️ VoiceOver dice anche se il bicchiere è già bevuto
+                .accessibilityValue(index < glasses ? tr("drunk", "bevuto") : tr("empty", "vuoto"))
             }
             Spacer(minLength: 4)
             Text("\(glasses) / \(goal)")
@@ -199,7 +201,7 @@ struct PlannerView: View {
                 .foregroundStyle(Theme.secondary)
         }
         .padding(.horizontal, 18)
-        .frame(height: 76)
+        .frame(minHeight: 76)
         .cardBackground(radius: 18)
     }
 

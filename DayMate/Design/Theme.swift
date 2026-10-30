@@ -45,7 +45,13 @@ enum Theme {
     static let lightMain  = Color(hex: 0xCDB9FF)
     static let accent     = Color(hex: 0x7EF0C8)
     static let text       = Color(hex: 0xF1EDFF)
-    static let secondary  = Color(hex: 0x9890BF)
+    /// Il grigio-lilla dei testi secondari. Sta in Assets.xcassets ("SecondaryText")
+    /// perché lì posso dargli DUE versioni: quella di Sketch (#9890BF) e una più chiara
+    /// (#CDC6EC) che iOS usa da solo se l'utente attiva
+    /// Impostazioni → Accessibilità → Schermo e dimensioni testo → Aumenta contrasto.
+    /// 📌 Nota per me: #9890BF su una card viola chiara (#332A5C) ha un contrasto di 4,35:1,
+    /// appena sotto il 4,5:1 consigliato per il testo piccolo. Così chi ne ha bisogno è coperto.
+    static let secondary  = Color("SecondaryText")
 
     /// Arancione tenue solo per gli avvisi (es. "il piano è stretto")
     static let warning    = Color(hex: 0xFFB86B)

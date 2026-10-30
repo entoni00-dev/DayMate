@@ -44,7 +44,7 @@ struct ModeHeader: View {
                 }
             }
             // stessa altezza anche quando il "+" non c'è, così il titolo non "salta"
-            .frame(height: 44)
+            .frame(minHeight: 44)
 
             // Riga 2: titolo grande e data
             ScreenTitle(title: title, subtitle: subtitle)

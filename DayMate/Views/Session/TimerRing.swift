@@ -42,12 +42,18 @@ struct TimerRing: View {
                     .monospacedDigit()                 // le cifre larghe uguali: il numero non "balla"
                     .contentTransition(.numericText()) // animazione dei numeri che cambiano
                     .foregroundStyle(Theme.text)
+                    // il cerchio ha una misura fissa: se le cifre non ci stanno si rimpiccioliscono
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
             }
             .padding(size * 0.17)
         }
         .frame(width: size, height: size)
+        // ♿️ VoiceOver legge "Tempo rimasto, 3:42" invece di un numero senza contesto
         .accessibilityElement()
-        .accessibilityLabel(time)
+        .accessibilityLabel(tr("Time left", "Tempo rimasto"))
+        .accessibilityValue(time)
+        .accessibilityAddTraits(.updatesFrequently)
     }
 }
 

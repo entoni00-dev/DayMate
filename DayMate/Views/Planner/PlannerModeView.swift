@@ -460,7 +460,7 @@ struct AddTaskSheet: View {
                     .focused($focused)
                     .submitLabel(.done)
                     .padding(.horizontal, 18)
-                    .frame(height: 52)
+                    .frame(minHeight: 52)
                     .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 // TYPE: Study / Duty / Free time
@@ -480,7 +480,7 @@ struct AddTaskSheet: View {
                                     .minimumScaleFactor(0.8)
                             }
                             .frame(maxWidth: .infinity)
-                            .frame(height: 96)
+                            .frame(minHeight: 96)
                             .background(kind == option ? Theme.main : Theme.card,
                                         in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
@@ -493,7 +493,7 @@ struct AddTaskSheet: View {
                 VStack(spacing: 0) {
                     DatePicker(tr("Time", "Ora"), selection: $time, displayedComponents: .hourAndMinute)
                         .padding(.horizontal, 18)
-                        .frame(height: 54)
+                        .frame(minHeight: 54)
                     Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
                     HStack {
                         Text(tr("Duration", "Durata"))
@@ -504,19 +504,19 @@ struct AddTaskSheet: View {
                         .labelsHidden()
                     }
                     .padding(.horizontal, 18)
-                    .frame(height: 54)
+                    .frame(minHeight: 54)
                     Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
                     // extra rispetto a Sketch: il giorno (di default quello aperto nel Planner)
                     DatePicker(tr("Day", "Giorno"), selection: $day, displayedComponents: .date)
                         .padding(.horizontal, 18)
-                        .frame(height: 54)
+                        .frame(minHeight: 54)
                     Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
                     Toggle(isOn: $isDeadline) {
                         Label(tr("It's a deadline", "È una scadenza"), systemImage: "flag.fill")
                     }
                     .tint(Theme.accent)
                     .padding(.horizontal, 18)
-                    .frame(height: 54)
+                    .frame(minHeight: 54)
                 }
                 .font(.system(.callout, weight: .medium))
                 .foregroundStyle(Theme.text)

@@ -25,6 +25,13 @@ struct OnboardingView: View {
     /// Chiamata quando l'utente sceglie, con la modalità scelta
     var onFinish: (AppMode) -> Void
 
+    // ♿️ @ScaledMetric: un numero che cresce insieme alla dimensione del testo scelta
+    // dall'utente (Impostazioni → Schermo → Dimensioni testo). 38 è la misura di Sketch.
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 38
+    // La dimensione del testo scelta dall'utente: se è enorme, rimpicciolisco gli anelli
+    // così i bottoni restano sullo schermo
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         VStack(spacing: 0) {
             // In alto a destra: la lingua (l'app parte in italiano)
@@ -37,13 +44,13 @@ struct OnboardingView: View {
 
             Spacer(minLength: 10)
 
-            GlowRings(size: 300, strongOuterRing: true) {
+            GlowRings(size: typeSize.isAccessibilitySize ? 170 : 300, strongOuterRing: true) {
                 BlobView(pose: .hello)
             }
 
             VStack(spacing: 8) {
                 Text("DayMate")
-                    .font(.system(size: 38, weight: .bold))
+                    .font(.system(size: titleSize, weight: .bold))
                     .foregroundStyle(Theme.text)
                 Text(tr("One tiny step at a time", "Un piccolo passo alla volta"))
                     .font(.body)
@@ -91,7 +98,8 @@ struct OnboardingView: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .frame(height: 64)
+        .padding(.vertical, 10)
+        .frame(minHeight: 64)
         .background(isMain ? Theme.main : Theme.card,
                     in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .contentShape(Rectangle())

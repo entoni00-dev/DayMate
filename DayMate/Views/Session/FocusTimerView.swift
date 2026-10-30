@@ -62,6 +62,7 @@ struct FocusTimerView: View {
         .onDisappear {
             countdown.stop()
             NotificationManager.shared.cancel(id: NotificationManager.focusID)
+            LiveActivityManager.shared.end(isBreak: false)
         }
     }
 
@@ -81,6 +82,13 @@ struct FocusTimerView: View {
                      "Hai fatto \(step.minutes) minuti. Continui o fai una pausa vera?"),
             after: seconds
         )
+        // 🏝️ anche il riscaldamento si vede sulla schermata di blocco
+        LiveActivityManager.shared.start(examName: "",
+                                         title: step.text,
+                                         subtitle: tr("Easier step first", "Prima un passo facilissimo"),
+                                         footer: tr("Just this. Nothing more.", "Solo questo. Niente di più."),
+                                         isBreak: false,
+                                         seconds: seconds)
     }
 
     private func finish(markedDone: Bool) {

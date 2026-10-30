@@ -13,7 +13,9 @@
 //   TINY STEPS   ○ Read notes Ch. 1   ≡
 //                ○ Exercises 1–5      ≡
 //                + Add a tiny step
-//   (Blob) Keep steps small: 10–25 minutes each works best
+//   (Blob) Keep steps small: 10–25 minutes each is a good size
+//   (In Sketch c'è "works best": l'ho ammorbidito perché non c'è uno studio che
+//    dimostri che 10–25 minuti sia la misura migliore per tutti.)
 //           [  Save  ]                    ← il grande bottone viola in fondo
 //
 //  I passi li scrivo io, uno per riga, e li riordino trascinando ≡.
@@ -138,7 +140,7 @@ struct AddExamView: View {
 
                 Section {
                     HintCard(title: tr("Keep steps small:", "Tieni i passi piccoli:"),
-                             text: tr("10–25 minutes each works best", "10–25 minuti l'uno funziona meglio"))
+                             text: tr("10–25 minutes each is a good size", "10–25 minuti l'uno è una buona misura"))
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }

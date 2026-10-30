@@ -85,6 +85,31 @@ Nel timer: ⏸ mette in pausa, ✓ segna il passo fatto e passa al prossimo senz
 
 ---
 
+## 🏝️ Timer sulla schermata di blocco e nella Dynamic Island (Live Activity)
+
+Durante un blocco di studio o una pausa, il conto alla rovescia si vede **senza sbloccare il telefono**: sulla schermata di blocco e, sugli iPhone 14 Pro e successivi, nella Dynamic Island. È il senso di "Phone down, one tiny step": guardi quanto manca senza finire su Instagram.
+
+Il codice è già pronto, ma serve un secondo "pezzo" del progetto (un *Widget Extension*) che si aggiunge **una volta sola, a mano, in Xcode**:
+
+1. **File → New → Target… → Widget Extension** → Next.
+2. Product Name: `DayMateWidget`. Spunta **Include Live Activity**, togli *Include Configuration App Intent* → Finish. Se chiede *Activate scheme?* → **Cancel**.
+3. Nella nuova cartella `DayMateWidget` **elimina** i file `.swift` che Xcode ha creato (*Move to Trash*).
+4. Trascina dentro `DayMateWidget` i due file della cartella **`WidgetCode/`** (`DayMateWidgetBundle.swift` e `DayMateWidgetLiveActivity.swift`), con il target **DayMateWidgetExtension** spuntato.
+5. Seleziona `DayMate/LiveActivity/StudyActivityAttributes.swift` → pannello a destra → **Target Membership** → spunta anche **DayMateWidgetExtension** (è il "contratto" che usano tutti e due).
+6. Target **DayMateWidgetExtension** → General → **Minimum Deployments: iOS 17.0** e lo stesso *Team* dell'app.
+
+Provala su un **iPhone vero**: avvia un blocco e blocca lo schermo. Nel simulatore la schermata di blocco funziona, la Dynamic Island solo sui simulatori "Pro".
+Se le Live Activity sono disattivate (Impostazioni → DayMate → Attività in tempo reale) l'app funziona lo stesso, semplicemente senza.
+
+Limite: dalla schermata di blocco si **vede** il timer ma non si può premere ⏸ o ✓. Per i bottoni servono gli *App Intents* (`LiveActivityIntent`): è il prossimo passo possibile.
+
+## ♿️ Accessibilità
+
+- **Testo grande (Dynamic Type):** righe e bottoni hanno un'altezza *minima* invece che fissa, così crescono con il testo. I titoli con misure di Sketch (38, 32, 44 pt) usano `@ScaledMetric`. Con le dimensioni "accessibilità" gli anelli della schermata iniziale e di "Welcome back" si rimpiccioliscono, così i bottoni restano sullo schermo. La settimana del Planner si ferma a XXXL, perché 7 quadratini devono stare in una riga.
+- **VoiceOver:** il timer dice "Tempo rimasto, 3:42"; i cerchi dei passi dicono "Fatto / Prossimo / Da fare"; gli anelli dicono la percentuale; le gocce d'acqua dicono "bevuto / vuoto".
+- **Aumenta contrasto:** il grigio-lilla dei testi secondari (#9890BF) sulle card chiare ha un contrasto di 4,35:1, appena sotto il 4,5:1 consigliato. Se l'utente attiva *Aumenta contrasto*, iOS usa da solo una versione più chiara (#CDC6EC, colore `SecondaryText` negli Assets).
+- **Riduci movimento:** "Welcome back" compare senza animazione a molla.
+
 ## 🗂️ Struttura del codice
 
 ```
@@ -101,6 +126,7 @@ DayMate/
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
 ├── Logic/                           → piano di studio, ritmo, tutor AI, notifiche, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
+├── LiveActivity/                    → dati e gestione del timer sulla schermata di blocco
 └── Views/
     ├── Onboarding/                  → schermata iniziale: Study oppure Plan my day
     ├── Planner/                     → modalità Planner: Giorno, Settimana, Scadenze

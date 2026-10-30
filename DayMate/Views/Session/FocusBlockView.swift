@@ -116,6 +116,7 @@ struct FocusBlockView: View {
         .onDisappear {
             countdown.stop()
             NotificationManager.shared.cancel(id: NotificationManager.focusID)
+            LiveActivityManager.shared.end(isBreak: false)
         }
         .alert(tr("Park your doubt", "Parcheggia il dubbio"), isPresented: $showingDoubt) {
             TextField(tr("E.g. Why does the limit equal 1?", "Es. Perché il limite fa 1?"), text: $doubtText)
@@ -141,6 +142,19 @@ struct FocusBlockView: View {
         countdown.onFinish = { finish(.timeUp) }
         countdown.start(seconds: seconds)
         scheduleNotification(after: seconds)
+        // 🏝️ il timer anche sulla schermata di blocco e nella Dynamic Island
+        LiveActivityManager.shared.start(examName: model.exam.name,
+                                         title: model.currentStep?.title ?? model.exam.name,
+                                         subtitle: stepSubtitle,
+                                         footer: tr("Phone down, one tiny step.", "Giù il telefono, un piccolo passo."),
+                                         isBreak: false,
+                                         seconds: seconds)
+    }
+
+    /// "Math · step 3 of 6" (lo stesso testo che c'è sopra il titolo)
+    private var stepSubtitle: String {
+        "\(model.exam.name) · " + tr("step \(model.stepNumber) of \(model.stepTotal)",
+                                     "passo \(model.stepNumber) di \(model.stepTotal)")
     }
 
     /// Se il telefono è bloccato, la fine del blocco arriva come notifica con il suo suono
@@ -156,9 +170,12 @@ struct FocusBlockView: View {
         if countdown.isPaused {
             countdown.resume()
             scheduleNotification(after: countdown.remaining)   // rimetto la notifica col tempo che manca
+            LiveActivityManager.shared.resume(remaining: countdown.remaining)
         } else {
             countdown.pause()
             NotificationManager.shared.cancel(id: NotificationManager.focusID)
+            LiveActivityManager.shared.pause(remaining: countdown.remaining,
+                                             pausedText: tr("Paused", "In pausa"))
         }
     }
 
@@ -169,7 +186,13 @@ struct FocusBlockView: View {
             hasMore = model.completeCurrentStep()
             showTip = false
         }
-        if !hasMore { finish(.allDone) }
+        if hasMore {
+            // 🏝️ la Live Activity mostra il nuovo passo (il tempo continua)
+            LiveActivityManager.shared.changeStep(title: model.currentStep?.title ?? "",
+                                                  subtitle: stepSubtitle)
+        } else {
+            finish(.allDone)
+        }
     }
 
     private func finish(_ reason: StudySessionModel.BlockEnd) {
