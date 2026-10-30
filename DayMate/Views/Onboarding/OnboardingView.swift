@@ -18,7 +18,7 @@
 //  Qui si sceglie come usare l'app (come entrare "da utente" o "da titolare").
 //  È la prima cosa che vedi OGNI volta che apri l'app: la domanda "cosa vuoi fare oggi?"
 //  è voluta, perché un giorno studi e un altro organizzi la giornata.
-//  Study e Plan si aprono "sopra" la Home: con "‹ Home" (o lo swipe) si torna qui.
+//  Per tornare qui: si tocca 🏠 Home nella barra in basso (o lo swipe da sinistra).
 //
 
 import SwiftUI

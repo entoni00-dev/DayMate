@@ -31,9 +31,9 @@ Requisiti: **iOS 17+**. Nessuna intelligenza artificiale: tutto funziona con reg
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
 3. **Due modi di usare l'app, scelti nella Home** (come entrare "da utente" o "da titolare"). La barra in basso ha sempre 🏠 Home all'inizio e ⚙️ Impostazioni alla fine; in mezzo, le sezioni della modalità scelta:
-   - 📚 **Studio** → 🏠 Home · 📊 Progressi · ⚙️ Impostazioni (3 bottoni). "Study" nella Home apre la schermata di oggi sopra la Home, con "‹ Home" per tornare.
+   - 📚 **Studio** → 🏠 Home · 📊 Progressi · ⚙️ Impostazioni (3 bottoni). "Study" nella Home apre la schermata di oggi sopra la Home; si torna alla scelta toccando di nuovo 🏠 Home.
    - 🗓️ **Planner** → 🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
-   - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; "‹ Home" in Study e in Plan riporta qui.
+   - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; per tornare qui basta 🏠 Home nella barra (niente link "‹ Home" in alto: la barra basta).
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
 5. **Planner**: settimana, STUDY (passi d'esame del giorno + attività di studio), DUTIES & FREE TIME con orario, acqua. "Add to your day" con tipo (Studio / Impegno / Tempo libero), ora, durata e "È una scadenza".
@@ -141,7 +141,7 @@ DayMate/
 │   ├── L10n.swift                   → lingua scelta dall'utente (IT di default): tr("…", "…")
 │   ├── BlobView.swift               → la mascotte (immagini in Assets/Mascot)
 │   ├── WeekStrip.swift              → la settimana a quadratini
-│   ├── ModeHeader.swift             → intestazione delle schermate (‹ Home, titolo, +) + colori della barra in basso
+│   ├── ModeHeader.swift             → intestazione delle schermate (titolo e +) + colori della barra in basso
 ├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
 ├── Logic/                           → piano di studio, ritmo, notifiche e promemoria, suoni

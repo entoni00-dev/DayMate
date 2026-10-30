@@ -6,29 +6,25 @@
 //
 //  📚 "Study" (schermata 01 di Sketch): si apre dalla Home quando tocchi "Study".
 //
-//   ‹ Home
 //   Study
 //   Thursday 29 October
 //   …TodayView: prossimo passo, "Add an exam", i tuoi esami, il piano di oggi…
 //
-//  "‹ Home" (o lo swipe da sinistra) riporta alla scelta Study / Plan my day.
+//  Per tornare alla scelta Study / Plan my day: 🏠 Home nella barra in basso
+//  (o lo swipe da sinistra).
 //
 
 import SwiftUI
 import SwiftData
 
 struct StudyHomeView: View {
-    /// Cosa fare quando tocco "‹ Home" (la decide RootView: torna alla scelta)
-    var onHome: () -> Void
-
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var showingAddExam = false
 
     var body: some View {
         VStack(spacing: 0) {
             // in Sketch il titolo è "Study" e al posto del "+" c'è il grande bottone "Add an exam"
-            ModeHeader(onHome: onHome,
-                       title: tr("Study", "Studio"),
+            ModeHeader(title: tr("Study", "Studio"),
                        subtitle: Date.now.longDayText)
 
             TodayView(onAddExam: { showingAddExam = true })
@@ -47,6 +43,6 @@ struct StudyHomeView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    NavigationStack { StudyHomeView(onHome: {}) }
+    NavigationStack { StudyHomeView() }
         .modelContainer(PreviewData.container)
 }

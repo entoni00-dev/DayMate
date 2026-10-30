@@ -6,7 +6,6 @@
 //
 //  "Today" (schermata 01 di Sketch) — la prima sezione della modalità Studio.
 //
-//   ‹ Home
 //   Study
 //   Thursday 29 October
 //   ┌ NEXT TINY STEP ───────────────┐

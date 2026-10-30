@@ -14,8 +14,8 @@
 //
 //  🏠 Home = la schermata iniziale "Study / Plan my day". Ogni volta che apri l'app
 //  parti da qui:
-//   - "Study" apre la schermata di oggi SOPRA la Home (con "‹ Home" per tornare)
-//     e la barra diventa quella dello Studio (3 bottoni)
+//   - "Study" apre la schermata di oggi SOPRA la Home e la barra diventa quella
+//     dello Studio (3 bottoni). Per tornare alla scelta: si tocca di nuovo 🏠 Home.
 //   - "Plan my day" apre la sezione Giorno e la barra diventa quella del Planner
 //
 //  📌 Nota per me: se esco dall'app con il tasto Home e rientro subito, iOS la tiene
@@ -85,7 +85,7 @@ struct RootView: View {
     var body: some View {
         // TabView = la barra delle sezioni in basso.
         // selection: $tab → la TabView sa quale sezione è aperta e la cambia quando tocco un'icona
-        TabView(selection: $tab) {
+        TabView(selection: tabSelection) {
             homeTab
 
             // Le sezioni in mezzo cambiano con la modalità
@@ -143,8 +143,7 @@ struct RootView: View {
             .dmTabBar()
             // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
             .navigationDestination(for: AppMode.self) { _ in
-                // "‹ Home" svuota la pila: si torna alla scelta
-                StudyHomeView(onHome: { homePath = NavigationPath() })
+                StudyHomeView()
             }
             .navigationDestination(for: Exam.self) { exam in
                 ExamDetailView(exam: exam)
@@ -170,8 +169,8 @@ struct RootView: View {
 
     private var dayTab: some View {
         NavigationStack {
-            // la schermata "Plan" di Sketch: ‹ Home, il "+" e il titolo "Plan"
-            screen(title: tr("Plan", "Pianifica"), onHome: goHome,
+            // la schermata "Plan" di Sketch: il "+" e il titolo "Plan"
+            screen(title: tr("Plan", "Pianifica"),
                    addLabel: tr("Add to your day", "Aggiungi alla giornata"),
                    onAdd: { showingAddTask = true }) {
                 PlannerView(day: $plannerDay)
@@ -228,14 +227,13 @@ struct RootView: View {
 
     // MARK: - Pezzi in comune
 
-    /// Una sezione: intestazione (‹ Home, titolo, +) + il suo contenuto
+    /// Una sezione: intestazione (titolo e +) + il suo contenuto
     private func screen<Content: View>(title: String,
-                                       onHome: (() -> Void)? = nil,
                                        addLabel: String? = nil,
                                        onAdd: @escaping () -> Void = {},
                                        @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            ModeHeader(onHome: onHome, title: title, addLabel: addLabel, onAdd: onAdd)
+            ModeHeader(title: title, addLabel: addLabel, onAdd: onAdd)
             content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -243,10 +241,23 @@ struct RootView: View {
         .dmTabBar()
     }
 
-    /// "‹ Home" nel Planner: apre la prima sezione della barra (e chiude Study, se era aperto)
-    private func goHome() {
-        homePath = NavigationPath()
-        withAnimation(.easeInOut) { tab = .home }
+    /// 🏠 Il "ponte" tra la barra e la variabile `tab`.
+    /// 📌 Nota per me: di solito si scrive TabView(selection: $tab). Qui mi serve una cosa
+    /// in più: se tocco 🏠 Home mentre sono GIÀ in Home (per esempio dentro Study), voglio
+    /// tornare alla scelta Study / Plan my day. Con un Binding fatto a mano vedo ogni tocco:
+    ///   get = quale sezione è aperta
+    ///   set = l'utente ha toccato una sezione (anche quella già aperta)
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { tab },
+            set: { touched in
+                if touched == .home && tab == .home {
+                    // svuoto la pila della Home: si torna alla scelta
+                    homePath = NavigationPath()
+                }
+                tab = touched
+            }
+        )
     }
 
     // MARK: - Promemoria
