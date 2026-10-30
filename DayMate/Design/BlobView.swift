@@ -4,12 +4,17 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  🫘 Il Blob, la mascotte di DayMate (pagina "Mascot" del file Sketch).
+//  🫘 Il Blob, la mascotte di DayMate: il bradipo nella "prugna" viola con la fogliolina.
 //
-//  Le 8 pose sono immagini PNG in Assets.xcassets → cartella "Mascot".
+//  Le pose sono immagini PNG in Assets.xcassets → cartella "Mascot".
 //  Ognuna si chiama "blob_" + il nome della posa (es. "blob_reading").
 //
-//  📌 Nota per me: per aggiornare un disegno basta esportarlo da Sketch come PNG
+//  ⚠️ Per ora abbiamo UN solo disegno della mascotte, quindi tutte le 8 pose
+//  usano la stessa immagine. Il codice però è già pronto per le pose diverse:
+//  quando il disegno "stanco" sarà pronto basta metterlo in "blob_tired" e
+//  comparirà da solo nella riga "Tired" di "How do you feel?", senza toccare il codice.
+//
+//  📌 Nota per me: per aggiornare un disegno basta esportarlo come PNG
 //  con sfondo trasparente e trascinarlo sopra quello vecchio, con lo STESSO nome.
 //  Ho usato un enum per non scrivere i nomi a mano: se sbaglio, Xcode me lo dice subito.
 //

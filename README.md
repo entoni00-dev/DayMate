@@ -46,17 +46,19 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 
 ## 🫘 Il Blob (la mascotte)
 
-Le 8 pose sono PNG in `Assets.xcassets/Mascot`, esportate dalla pagina *Mascot* del file Sketch:
+Il bradipo nella "prugna" viola con la fogliolina verde. I PNG stanno in `Assets.xcassets/Mascot`, con lo sfondo trasparente.
 
-| Nome asset | Dove compare |
-|---|---|
-| `blob_hello` | schermata iniziale, "Welcome back!" |
-| `blob_reading` | card "Next tiny step" |
-| `blob_cheer` | "Nice work!" a fine blocco, riepilogo |
-| `blob_ready`, `blob_tired`, `blob_stressed`, `blob_stuck` | le 4 righe di "How do you feel?" |
-| `blob_break` | pausa |
+**Per ora c'è un solo disegno**, quindi tutte le pose usano la stessa immagine. Il codice è già pronto per le pose diverse: basta disegnarle e metterle al posto giusto, con lo stesso nome.
 
-Per aggiornarle basta riesportarle da Sketch con lo stesso nome: `BlobView` mostra semplicemente `Image("blob_…")`.
+| Nome asset | Dove compare | Idea per la posa |
+|---|---|---|
+| `blob_hello` | schermata iniziale, "Welcome back!" | saluta con un braccio |
+| `blob_reading` | card "Next tiny step", consigli | con un libro |
+| `blob_cheer` | "Nice work!" a fine blocco, riepilogo | braccia in alto |
+| `blob_ready`, `blob_tired`, `blob_stressed`, `blob_stuck` | le 4 righe di "How do you feel?" | sorriso / occhi chiusi zZ / goccia di sudore / occhi a spirale |
+| `blob_break` | pausa | con una tazza |
+
+L'**icona dell'app** (`AppIcon`) è la stessa mascotte su un viola che sfuma nel nero.
 
 ## 🔁 Il ciclo dell'app
 
