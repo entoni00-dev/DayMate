@@ -10,6 +10,7 @@
 //   New exam
 //   SUBJECT      [ Math              ]
 //   EXAM DATE    [ 12 November 2026 📅]
+//   TIME PER DAY [ 1 h ]   ✅ Ci sta: ≈ 25 min al giorno per 14 giorni
 //   TINY STEPS   ○ Read notes Ch. 1   ≡
 //                ○ Exercises 1–5      ≡
 //                + Add a tiny step
@@ -19,8 +20,9 @@
 //           [  Save  ]                    ← il grande bottone viola in fondo
 //
 //  I passi li scrivo io, uno per riga, e li riordino trascinando ≡.
-//  Se non so da dove partire c'è "✨ Create the steps for me": dico argomenti, pagine e
-//  difficoltà e l'app crea un piano realistico (vedi StepGenerator.swift).
+//  Se non so da dove partire c'è "Crea i passi da argomenti e pagine": dico argomenti,
+//  pagine e difficoltà e l'app crea un piano realistico con regole semplici
+//  (niente intelligenza artificiale: vedi StepGenerator.swift).
 //
 //  📌 Nota per me: qui uso un Form (la lista "a gruppi" di iOS) perché mi dà gratis
 //  il trascinamento per riordinare (.onMove) e lo swipe per eliminare (.onDelete).
@@ -49,12 +51,37 @@ struct AddExamView: View {
     @State private var date = Calendar.current.date(byAdding: .day, value: 14, to: .now) ?? .now
     @State private var steps: [TinyStepDraft] = []
     @State private var newStep = ""
+    /// Quanto tempo al giorno posso dedicare a questo esame (in minuti)
+    @State private var dailyMinutes = 60
     @State private var showingGenerator = false
     // @FocusState dice quale campo di testo ha la tastiera (così posso aprirla da codice)
     @FocusState private var newStepFocused: Bool
 
     private var trimmedSubject: String {
         subject.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// I tempi possibili: dalla tartaruga 🐢 (30 min) alla lepre 🐇 (5 ore)
+    private let dailyOptions = [30, 60, 90, 120, 180, 240, 300]
+
+    /// Quanti giorni ho per studiare (da oggi al giorno prima dell'esame, almeno 1)
+    private var studyDays: Int {
+        let today = Calendar.current.startOfDay(for: .now)
+        let examDay = Calendar.current.startOfDay(for: date)
+        let days = Calendar.current.dateComponents([.day], from: today, to: examDay).day ?? 0
+        return max(1, days)
+    }
+
+    /// Quanti minuti al giorno servirebbero per fare tutti i passi in tempo.
+    /// reduce = "somma tutti i minuti dei passi"; poi divido per i giorni, arrotondando per eccesso
+    private var neededPerDay: Int {
+        let total = steps.reduce(0) { $0 + $1.minutes }
+        return Int((Double(total) / Double(studyDays)).rounded(.up))
+    }
+
+    /// Il piano ci sta nel tempo che ho? (tollero un 10% in più, come StudyPlanner)
+    private var planFits: Bool {
+        Double(neededPerDay) <= Double(dailyMinutes) * 1.1
     }
 
     /// Posso salvare solo con un nome e almeno un passo
@@ -87,6 +114,31 @@ struct AddExamView: View {
                     DatePicker(tr("Date", "Data"), selection: $date,
                                in: Calendar.current.startOfDay(for: .now)...,
                                displayedComponents: .date)
+                }
+                .listRowBackground(Theme.card)
+
+                // ⏱️ Tempo al giorno + "ci sta?" (c'era nella prima versione di DayMate)
+                Section {
+                    Picker(tr("Time per day", "Tempo al giorno"), selection: $dailyMinutes) {
+                        ForEach(dailyOptions, id: \.self) { minutes in
+                            Text(minutes.asDuration).tag(minutes)
+                        }
+                    }
+                    // La card compare solo quando c'è almeno un passo da calcolare
+                    if !steps.isEmpty {
+                        HStack(alignment: .top, spacing: 10) {
+                            Text(planFits ? "✅" : "⚠️")
+                            Text(planFits
+                                 ? tr("It fits: ≈ \(neededPerDay.asDuration) a day for \(studyDays) days. If you skip a day, the plan adapts by itself.",
+                                      "Ci sta: ≈ \(neededPerDay.asDuration) al giorno per \(studyDays) giorni. Se salti un giorno, il piano si adatta da solo.")
+                                 : tr("It doesn't fit: you'd need \(neededPerDay.asDuration) a day. Add time, remove less important steps or consider a later exam date.",
+                                      "Non ci sta: servirebbero \(neededPerDay.asDuration) al giorno. Aumenta il tempo, togli i passi meno importanti o valuta l'appello dopo."))
+                                .font(.footnote)
+                                .foregroundStyle(planFits ? Theme.accent : Theme.warning)
+                        }
+                    }
+                } header: {
+                    Text(tr("Time per day", "Tempo al giorno"))
                 }
                 .listRowBackground(Theme.card)
 
@@ -129,7 +181,7 @@ struct AddExamView: View {
                     Button {
                         showingGenerator = true
                     } label: {
-                        Label(tr("Create the steps for me", "Crea i passi per me"), systemImage: "sparkles")
+                        Label(tr("Create steps from topics and pages", "Crea i passi da argomenti e pagine"), systemImage: "list.number")
                             .foregroundStyle(Theme.lightMain)
                     }
                 } footer: {
@@ -186,7 +238,7 @@ struct AddExamView: View {
         // guard = "se questa condizione non è vera, esci subito"
         guard canSave else { return }
         let exam = Exam(name: trimmedSubject, date: date, emoji: "📘", colorIndex: 0,
-                        kind: .mixed, dailyMinutes: 60)
+                        kind: .mixed, dailyMinutes: dailyMinutes)
         context.insert(exam)
         // Trasformo le bozze in passi veri, nell'ordine scelto (enumerated mi dà anche l'indice)
         for (index, draft) in steps.enumerated() {
@@ -200,7 +252,7 @@ struct AddExamView: View {
     }
 }
 
-// MARK: - "✨ Crea i passi per me"
+// MARK: - "Crea i passi da argomenti e pagine"
 
 /// Il foglio che usa StepGenerator: argomenti + pagine + difficoltà → passi realistici
 struct StepGeneratorSheet: View {

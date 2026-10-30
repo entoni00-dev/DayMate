@@ -4,28 +4,30 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  📚 "Study": si apre dalla Home quando tocchi "Study" (schermata 01 di Sketch).
+//  📚 "Study" (schermata 01 di Sketch): la prima sezione della modalità Studio.
 //
 //   ‹ Home
 //   Study
 //   Thursday 29 October
-//   …TodayView: prossimo passo, "Add an exam", i tuoi esami…
+//   …TodayView: prossimo passo, "Add an exam", i tuoi esami, il piano di oggi…
 //
-//  "‹ Home" (o lo swipe da sinistra) riporta alla scelta Study / Plan my day.
-//  La barra in basso resta visibile: Dubbi, Progressi e Impostazioni sono a un tocco.
+//  "‹ Home" porta alla prima sezione della barra, dove si sceglie Study o Plan my day.
 //
 
 import SwiftUI
 import SwiftData
 
 struct StudyHomeView: View {
+    /// Cosa fare quando tocco "‹ Home" (la decide RootView: apre la sezione Home)
+    var onHome: () -> Void
+
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var showingAddExam = false
 
     var body: some View {
         VStack(spacing: 0) {
             // in Sketch il titolo è "Study" e al posto del "+" c'è il grande bottone "Add an exam"
-            ModeHeader(showsHomeLink: true,
+            ModeHeader(onHome: onHome,
                        title: tr("Study", "Studio"),
                        subtitle: Date.now.longDayText)
 
@@ -45,6 +47,6 @@ struct StudyHomeView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    NavigationStack { StudyHomeView() }
+    NavigationStack { StudyHomeView(onHome: {}) }
         .modelContainer(PreviewData.container)
 }

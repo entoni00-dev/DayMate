@@ -85,9 +85,9 @@ struct SessionFlowView: View {
 
         case .warmUp:
             if let warm = model.warmUp {
-                FocusTimerView(step: warm) { elapsed, _ in
-                    model.warmUpFinished(elapsedSeconds: elapsed)
-                }
+                FocusTimerView(step: warm,
+                               onFinish: { elapsed, _ in model.warmUpFinished(elapsedSeconds: elapsed) },
+                               onAnotherStep: { model.anotherWarmUp() })
             }
 
         case .choice:

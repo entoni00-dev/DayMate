@@ -6,7 +6,7 @@
 //
 //  💭 Aggiungere un dubbio in qualsiasi momento (non solo durante un blocco di studio).
 //  Scrivi la domanda, e se vuoi la colleghi a un esame e a un argomento:
-//  così dopo, nei Dubbi, il Tutor AI sa di cosa si parla.
+//  così dopo, nei Dubbi, sai subito di cosa si parla.
 //
 
 import SwiftUI
@@ -79,8 +79,8 @@ struct AddDoubtSheet: View {
                     .transition(.opacity)
                 }
 
-                Text(tr("You'll find it in Study → Doubts. With the AI tutor you can ask it there; otherwise take it to your professor or a classmate.",
-                        "Lo ritrovi in Studio → Dubbi. Con il Tutor AI puoi chiederlo lì; altrimenti portalo al prof o a un compagno."))
+                Text(tr("You'll find it in Study → Doubts. Take it to your professor or a classmate.",
+                        "Lo ritrovi in Studio → Dubbi. Portalo al prof o a un compagno."))
                     .font(.caption)
                     .foregroundStyle(Theme.secondary)
 

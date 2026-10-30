@@ -9,10 +9,9 @@
 //  Problema: mentre studi trovi qualcosa che non capisci → prendi il telefono per
 //  cercarlo → 20 minuti dopo sei su Instagram. Oppure ti blocchi e smetti.
 //  Soluzione: durante il blocco di studio scrivi il dubbio in 5 secondi e vai avanti.
-//  Lo riprendi con calma dopo: con il Tutor AI (se disponibile), il prof o un compagno.
-//
-//  È anche il punto in cui l'AI si inserisce senza diventare una distrazione:
-//  non chatti mentre studi, la usi a fine sessione.
+//  Lo riprendi con calma dopo: sul libro, con il prof o con un compagno.
+//  Quando lo risolvi puoi scrivere in due righe cosa hai capito: diventa un appunto
+//  da ripassare prima dell'esame.
 //
 
 import Foundation
@@ -25,7 +24,7 @@ final class Doubt {
     var examName: String
     var createdAt: Date
     var isResolved: Bool = false
-    /// Risposta del Tutor AI o appunto scritto dall'utente
+    /// Cosa ho capito, scritto da me quando l'ho risolto (facoltativo)
     var answer: String?
 
     init(text: String, topic: String, examName: String) {

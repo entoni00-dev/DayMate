@@ -15,6 +15,9 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
+    /// La modalità in uso: alcune impostazioni servono solo in una delle due
+    var mode: AppMode = .study
+
     // @AppStorage salva un valore semplice nelle impostazioni del telefono (UserDefaults)
     @AppStorage(AppSettings.blockMinutesKey) private var blockMinutes = AppSettings.defaultBlockMinutes
     @AppStorage(AppSettings.shortBreakKey) private var shortBreak = AppSettings.defaultShortBreak
@@ -63,51 +66,56 @@ struct SettingsView: View {
                 }
                 .listRowBackground(Theme.card)
 
-                // MARK: Ritmo
-                Section {
-                    Picker(tr("Study block", "Blocco di studio"), selection: $blockMinutes) {
-                        ForEach([15, 20, 25, 30, 45, 50], id: \.self) { Text("\($0) min").tag($0) }
+                if mode == .study {
+                    // MARK: Ritmo (solo Studio)
+                    Section {
+                        Picker(tr("Study block", "Blocco di studio"), selection: $blockMinutes) {
+                            ForEach([15, 20, 25, 30, 45, 50], id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                        Picker(tr("Short break", "Pausa breve"), selection: $shortBreak) {
+                            ForEach([3, 5, 10], id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                        Picker(tr("Long break (every 4 blocks)", "Pausa lunga (ogni 4 blocchi)"), selection: $longBreak) {
+                            ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                    } header: {
+                        Text(tr("Study / break rhythm", "Ritmo studio / pausa"))
+                    } footer: {
+                        Text(tr("The first blocks start shorter depending on how you feel (e.g. 5 → 10 → 15 min if you're stuck) and grow up to this length. 25 + 5 minutes is the classic \"Pomodoro\": a good starting point, not a scientific rule.",
+                                "I primi blocchi partono più corti in base a come ti senti (es. 5 → 10 → 15 min se sei bloccato) e crescono fino a questa durata. 25 + 5 minuti è il classico \"Pomodoro\": un buon punto di partenza, non una regola scientifica."))
                     }
-                    Picker(tr("Short break", "Pausa breve"), selection: $shortBreak) {
-                        ForEach([3, 5, 10], id: \.self) { Text("\($0) min").tag($0) }
+                    .listRowBackground(Theme.card)
+
+                    // MARK: Avvisi del timer (solo Studio)
+                    Section {
+                        Toggle(tr("Alarm sound", "Suono di sveglia"), isOn: $soundEnabled)
+                            .tint(Theme.main)
+                        Toggle(tr("Notifications when locked", "Notifiche a schermo bloccato"), isOn: $notificationsEnabled)
+                            .tint(Theme.main)
+                        Button(tr("Try the break sound", "Prova il suono della pausa")) { SoundPlayer.shared.play(.pause, repeats: 1) }
+                        Button(tr("Try the study sound", "Prova il suono dello studio")) { SoundPlayer.shared.play(.study, repeats: 1) }
+                    } header: {
+                        Text(tr("Timer alerts", "Avvisi del timer"))
+                    } footer: {
+                        Text(tr("End of block: \"Time for a break!\". End of break: \"Welcome back!\". The sound plays even with the silent switch on, like an alarm. Notifications are local: no server.",
+                                "A fine blocco: \"È tempo di una pausa!\". A fine pausa: \"Bentornato!\". Il suono si sente anche con l'interruttore silenzioso, come una sveglia. Le notifiche sono locali: nessun server."))
                     }
-                    Picker(tr("Long break (every 4 blocks)", "Pausa lunga (ogni 4 blocchi)"), selection: $longBreak) {
-                        ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) min").tag($0) }
+                    .listRowBackground(Theme.card)
+                } else {
+                    // MARK: Planner (solo Planner)
+                    Section(tr("Planner", "Planner")) {
+                        Stepper(value: $waterGoal, in: 4...14) {
+                            Text(tr("Water goal: \(waterGoal) glasses", "Obiettivo acqua: \(waterGoal) bicchieri"))
+                        }
                     }
-                } header: {
-                    Text(tr("Study / break rhythm", "Ritmo studio / pausa"))
-                } footer: {
-                    Text(tr("The first blocks start shorter depending on how you feel (e.g. 5 → 10 → 15 min if you're stuck) and grow up to this length. 25 + 5 minutes is the classic \"Pomodoro\": a good starting point, not a scientific rule.",
-                            "I primi blocchi partono più corti in base a come ti senti (es. 5 → 10 → 15 min se sei bloccato) e crescono fino a questa durata. 25 + 5 minuti è il classico \"Pomodoro\": un buon punto di partenza, non una regola scientifica."))
+                    .listRowBackground(Theme.card)
                 }
-                .listRowBackground(Theme.card)
-                // MARK: Planner
-                Section(tr("Planner", "Planner")) {
-                    Stepper(value: $waterGoal, in: 4...14) {
-                        Text(tr("Water goal: \(waterGoal) glasses", "Obiettivo acqua: \(waterGoal) bicchieri"))
-                    }
-                }
-                .listRowBackground(Theme.card)
-                // MARK: Avvisi del timer
-                Section {
-                    Toggle(tr("Alarm sound", "Suono di sveglia"), isOn: $soundEnabled)
-                        .tint(Theme.main)
-                    Toggle(tr("Notifications when locked", "Notifiche a schermo bloccato"), isOn: $notificationsEnabled)
-                        .tint(Theme.main)
-                    Button(tr("Try the break sound", "Prova il suono della pausa")) { SoundPlayer.shared.play(.pause, repeats: 1) }
-                    Button(tr("Try the study sound", "Prova il suono dello studio")) { SoundPlayer.shared.play(.study, repeats: 1) }
-                } header: {
-                    Text(tr("Timer alerts", "Avvisi del timer"))
-                } footer: {
-                    Text(tr("End of block: \"Time for a break!\". End of break: \"Welcome back!\". The sound plays even with the silent switch on, like an alarm. Notifications are local: no server.",
-                            "A fine blocco: \"È tempo di una pausa!\". A fine pausa: \"Bentornato!\". Il suono si sente anche con l'interruttore silenzioso, come una sveglia. Le notifiche sono locali: nessun server."))
-                }
-                .listRowBackground(Theme.card)
+
                 // MARK: Privacy
                 Section("Privacy") {
                     Label {
-                        Text(tr("All data stays on this iPhone. No account, no server, no tracking. The AI tutor, when available, runs on the phone too.",
-                                "Tutti i dati restano solo su questo iPhone. Niente account, niente server, niente tracciamento. Anche il Tutor AI, quando disponibile, gira sul telefono."))
+                        Text(tr("All data stays on this iPhone. No account, no server, no tracking.",
+                                "Tutti i dati restano solo su questo iPhone. Niente account, niente server, niente tracciamento."))
                             .font(.subheadline)
                     } icon: {
                         Image(systemName: "lock.shield.fill")
@@ -175,6 +183,6 @@ struct SettingsView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    NavigationStack { SettingsView() }
+    NavigationStack { SettingsView(mode: .study) }
         .modelContainer(PreviewData.container)
 }

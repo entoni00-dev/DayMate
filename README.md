@@ -20,7 +20,7 @@ L'app parte in **italiano**; l'utente può passare all'**inglese** dalla prima s
    - se serve, cambia il *Bundle Identifier* (ora è `it.foundation.daymate`);
    - sull'iPhone: *Impostazioni → Generali → VPN e gestione dispositivi* → autorizza lo sviluppatore.
 
-Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intelligence.
+Requisiti: **iOS 17+**. Nessuna intelligenza artificiale: tutto funziona con regole semplici, sul telefono.
 
 > ℹ️ Il Bundle Identifier è cambiato: DayMate si installa come **app nuova**, accanto a Primo Passo. I dati di Primo Passo non vengono trasferiti.
 
@@ -30,20 +30,20 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 
 1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
 2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
-3. **Una barra sola in basso per tutta l'app: 🏠 Home · 💬 Dubbi · 📊 Progressi · ⚙️ Impostazioni.**
-   - La **Home** è la schermata iniziale: "Study" oppure "Plan my day" (come entrare "da utente" o "da titolare"). Ogni volta che apri l'app parti da qui.
-   - 📚 **Study** si apre sopra la Home (Today, esami, "Add an exam") con "‹ Home" per tornare.
-   - 🗓️ **Plan** si apre sopra la Home con "‹ Home", il "+" e il selettore Giorno · Settimana · Scadenze.
-   - Dubbi, Progressi e Impostazioni sono sempre a un tocco, qualunque cosa tu stia facendo.
+3. **Due modi di usare l'app, scelti nella Home** (come entrare "da utente" o "da titolare"). La barra in basso ha sempre 🏠 Home all'inizio e ⚙️ Impostazioni alla fine; in mezzo, le sezioni della modalità scelta:
+   - 📚 **Studio** → 🏠 Home · ☀️ Oggi · 💬 Dubbi · 📊 Progressi · ⚙️ Impostazioni
+   - 🗓️ **Planner** → 🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze · ⚙️ Impostazioni
+   - La **Home** è la schermata iniziale "Study / Plan my day": ogni volta che apri l'app parti da qui. Toccando una delle due, la barra diventa quella della modalità. Un ✓ indica quella in uso; "‹ Home" in Oggi e in Plan riporta qui.
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
    - **Dubbi**: si aggiungono quando vuoi (Dubbi → + Dubbio, o dal menu ••• di un esame), non solo durante un blocco.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
 5. **Planner**: settimana, STUDY (passi d'esame del giorno + attività di studio), DUTIES & FREE TIME con orario, acqua. "Add to your day" con tipo (Studio / Impegno / Tempo libero), ora, durata e "È una scadenza".
-6. **New exam come in Sketch**: materia, data e i piccoli passi scritti a mano (si riordinano trascinando ≡). Con "✨ Crea i passi per me" l'app genera un piano realistico da argomenti e pagine.
-7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Esami, Dubbi, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`; e il **Tutor AI on-device** con Foundation Models (iOS 26).
+6. **New exam come in Sketch**: materia, data e i piccoli passi scritti a mano (si riordinano trascinando ≡). Con "Crea i passi da argomenti e pagine" l'app genera un piano realistico con regole semplici. **Tempo al giorno** (da 30 min a 5 h) e la card **"Ci sta / Non ci sta"** dicono subito se il piano è fattibile prima dell'esame.
+7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Esami, Dubbi, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`, Live Activity, `@ScaledMetric`.
 8. **Codice scritto per essere capito**: commenti in prima persona in ogni file (📌 Nota per me, 🐛 Problema che ho incontrato), niente trucchi avanzati dove non servono.
 9. **Italiano (predefinito) + inglese a scelta dell'utente**, con `tr("English", "Italiano")` (file `Design/L10n.swift`). Cambiando lingua l'app si ridisegna subito e resti nella schermata in cui eri.
-10. **Coach tolto**: i consigli e "Cosa funziona davvero" non ci sono più. Il Tutor AI resta dentro i Dubbi ("Chiedi al tutor").
+10. **Niente AI e niente Coach**: l'app non usa l'intelligenza artificiale. Nei Dubbi, quando ne risolvi uno, scrivi tu in due righe "cosa ho capito": diventa un appunto da ripassare.
+11. **"Un altro passo minuscolo"**: nel riscaldamento di "Stuck", se anche il passo proposto spaventa, ne chiedi un altro con un tocco.
 
 ## 🫘 Il Blob (la mascotte)
 
@@ -144,24 +144,23 @@ DayMate/
 │   ├── ModeHeader.swift             → intestazione delle schermate (‹ Home, titolo, +) + colori della barra in basso
 ├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession, Doubt,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
-├── Logic/                           → piano di studio, ritmo, tutor AI, notifiche e promemoria, suoni
+├── Logic/                           → piano di studio, ritmo, notifiche e promemoria, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
 ├── LiveActivity/                    → dati e gestione del timer sulla schermata di blocco
 └── Views/
-    ├── RootView.swift               → la barra in basso: Home · Dubbi · Progressi · Impostazioni
+    ├── RootView.swift               → la barra in basso: Home + sezioni della modalità + Impostazioni
     ├── Onboarding/                  → la Home: Study oppure Plan my day
-    ├── Planner/                     → Plan: Giorno, Settimana, Scadenze, "Add to your day"
+    ├── Planner/                     → Giorno (Plan), Settimana, Scadenze, "Add to your day"
     ├── Exams/                       → esami, nuovo esame, dettaglio
-    ├── Study/                       → Study ("Today")
+    ├── Study/                       → Oggi (la schermata "Study" di Sketch)
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
-    ├── Doubts/ Stats/ Settings/     → Settings contiene anche i Promemoria
+    ├── Doubts/ Stats/ Settings/     → Dubbi con "cosa ho capito", Progressi, Impostazioni e Promemoria
     └── Components/                  → programma della giornata, StatTile…
 ```
 
 **Scelte architetturali:**
 - La sessione segue il pattern **MVVM**: `StudySessionModel` (@Observable) contiene stato e decisioni, le viste mostrano e comunicano le scelte con closure.
 - Il **piano non viene salvato ma ricalcolato** ogni volta dai passi rimasti: così si adatta da solo e non genera "ritardi" che fanno sentire in colpa. Anche il Planner lo legge da lì.
-- Il **Tutor AI** è isolato dietro `#if canImport(FoundationModels)` + `@available(iOS 26, *)`: l'app compila e gira anche su iOS 17.
 - **Solo modalità scura**: la palette Ube night è pensata per lo sfondo notturno.
 
 ## 💡 Idee aggiunte rispetto al prompt iniziale
@@ -182,7 +181,6 @@ DayMate/
 
 - L'app **non legge il materiale**: le stime partono dalle pagine (3-7 min/pagina) e poi si calibrano sui tuoi tempi reali. Le pagine le devi contare tu.
 - Le pause "senza telefono" sono **auto-dichiarate**: l'app si fida dell'utente.
-- Il Tutor AI usa un modello piccolo: ottimo per spiegare e interrogare, ma può sbagliare sui fatti.
 - iOS può ritardare le notifiche se il telefono è in modalità Risparmio energetico o Full Immersion.
 
 - Le traduzioni usano `tr()` e non uno String Catalog, perché la lingua la sceglie l'utente dentro l'app (lo String Catalog segue la lingua del telefono). Per una terza lingua bisognerebbe estendere `tr()`.
@@ -191,8 +189,8 @@ DayMate/
 ## 🚀 Possibili sviluppi
 
 - **AlarmKit** (iOS 26): una vera sveglia di sistema che suona anche in modalità Full Immersion.
-- Foto degli appunti → quiz con l'AI (VisionKit + Foundation Models).
-- Widget / Live Activity con il timer sulla schermata di blocco.
+- Bottoni ⏸ e ✓ direttamente nella Live Activity (App Intents).
+- Widget "Next tiny step" sulla schermata Home dell'iPhone.
 - **Screen Time API** (FamilyControls) per silenziare i social durante i blocchi.
 
 ---

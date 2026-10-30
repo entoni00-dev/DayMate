@@ -24,6 +24,8 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    /// La modalità usata l'ultima volta (ha un piccolo ✓, così sai quale barra vedi sotto)
+    var currentMode: AppMode? = nil
     /// Chiamata quando l'utente sceglie, con la modalità scelta
     var onFinish: (AppMode) -> Void
 
@@ -99,6 +101,13 @@ struct OnboardingView: View {
                     .foregroundStyle(isMain ? Theme.background : Theme.secondary)
             }
             Spacer()
+            // ✓ sulla modalità in uso (quella delle sezioni nella barra qui sotto)
+            if mode == currentMode {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(isMain ? Theme.background : Theme.accent)
+                    .accessibilityLabel(tr("In use", "In uso"))
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

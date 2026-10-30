@@ -5,8 +5,9 @@
 //  Created by Antonio Carotenuto.
 //
 //  I dubbi annotati durante i blocchi di studio.
-//  Con il Tutor AI disponibile: "Ask the tutor" e la risposta viene salvata.
-//  Senza AI: restano una lista ordinata da portare al prof o ai compagni.
+//  Una lista ordinata da portare al prof o ai compagni.
+//  Quando ne risolvi uno, puoi scrivere in due righe cosa hai capito:
+//  diventa un appunto da ripassare (il "Cosa ho capito" sotto il dubbio).
 //
 
 import SwiftUI
@@ -23,6 +24,9 @@ struct DoubtsView: View {
     var embedded = false
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var showingAdd = false
+    /// Il dubbio che sto segnando come risolto (per scrivere cosa ho capito)
+    @State private var solving: Doubt?
+    @State private var answerText = ""
 
     // Divido i dubbi in due liste: da risolvere e risolti
     // ($0 vuol dire "l'elemento che sto controllando", qui un Doubt)
@@ -90,10 +94,10 @@ struct DoubtsView: View {
                     .listRowBackground(Theme.card)
                 }
 
-                if !AITutor.isAvailable && !open.isEmpty {
+                if !open.isEmpty {
                     Section {
-                        Text(tr("Without the AI tutor: take this list to your professor's office hours or ask a classmate. A written doubt is already half solved.",
-                                "Senza Tutor AI: porta questa lista al ricevimento del prof o chiedi a un compagno. Un dubbio scritto è già mezzo risolto."))
+                        Text(tr("Take this list to your professor's office hours or ask a classmate. A written doubt is already half solved.",
+                                "Porta questa lista al ricevimento del prof o chiedi a un compagno. Un dubbio scritto è già mezzo risolto."))
                             .font(.footnote)
                             .foregroundStyle(Theme.secondary)
                     }
@@ -107,6 +111,28 @@ struct DoubtsView: View {
         .sheet(isPresented: $showingAdd) {
             AddDoubtSheet()
         }
+        // Quando segno un dubbio come risolto, chiedo (facoltativo) cosa ho capito
+        .alert(tr("What did you understand?", "Cosa hai capito?"),
+               isPresented: Binding(get: { solving != nil }, set: { if !$0 { solving = nil } })) {
+            TextField(tr("Two lines are enough", "Bastano due righe"), text: $answerText)
+            Button(tr("Save", "Salva")) { markSolved(withAnswer: true) }
+            Button(tr("Skip", "Salta"), role: .cancel) { markSolved(withAnswer: false) }
+        } message: {
+            Text(tr("It becomes a note to review before the exam.",
+                    "Diventa un appunto da ripassare prima dell'esame."))
+        }
+    }
+
+    /// Segna il dubbio come risolto, con o senza l'appunto
+    private func markSolved(withAnswer: Bool) {
+        guard let doubt = solving else { return }
+        let text = answerText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if withAnswer && !text.isEmpty { doubt.answer = text }
+        // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
+        withAnimation { doubt.isResolved = true }
+        Haptics.success()
+        answerText = ""
+        solving = nil
     }
 
     private func row(_ doubt: Doubt) -> some View {
@@ -123,6 +149,10 @@ struct DoubtsView: View {
                 .foregroundStyle(Theme.secondary)
 
             if let answer = doubt.answer {
+                // 💡 l'appunto scritto quando l'ho risolto
+                Label(tr("What I understood", "Cosa ho capito"), systemImage: "lightbulb.fill")
+                    .font(.caption.bold())
+                    .foregroundStyle(Theme.accent)
                 Text(answer)
                     .font(.subheadline)
                     .foregroundStyle(Theme.text)
@@ -133,26 +163,17 @@ struct DoubtsView: View {
             }
 
             HStack(spacing: 10) {
-                if let chat = AITutor.chatView(
-                    topics: [doubt.topic],
-                    initialPrompt: AITutor.doubtPrompt(doubt),
-                    onAnswer: { answer in doubt.answer = answer }
-                ) {
-                    NavigationLink {
-                        chat
-                    } label: {
-                        Label(tr("Ask the tutor", "Chiedi al tutor"), systemImage: "sparkles")
-                            .font(.caption.bold())
-                    }
-                    .buttonStyle(.borderless)
-                    .tint(Theme.lightMain)
-                }
-
                 Spacer()
 
                 Button {
-                    // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
-                    withAnimation { doubt.isResolved.toggle() }
+                    if doubt.isResolved {
+                        // riapro il dubbio (l'appunto resta, non si perde niente)
+                        withAnimation { doubt.isResolved = false }
+                    } else {
+                        // prima chiedo cosa ho capito (vedi .alert sopra)
+                        answerText = doubt.answer ?? ""
+                        solving = doubt
+                    }
                 } label: {
                     Label(doubt.isResolved ? tr("Reopen", "Riapri") : tr("Solved", "Risolto"),
                           systemImage: doubt.isResolved ? "arrow.uturn.backward" : "checkmark.circle")

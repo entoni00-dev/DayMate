@@ -4,14 +4,15 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  🔀 I due modi di usare DayMate, scelti nella schermata iniziale OGNI volta che apri l'app
+//  🔀 I due modi di usare DayMate, scelti nella Home OGNI volta che apri l'app
 //  (un po' come entrare "da utente" o "da titolare" in altre app):
 //
-//   📚 study   → "Organizza lo studio": Oggi · Dubbi · Progressi · Impostazioni
-//   🗓️ planner → "Fai un planner":      Giorno · Settimana · Scadenze · Impostazioni
+//   📚 study   → barra: Home · Oggi   · Dubbi     · Progressi · Impostazioni
+//   🗓️ planner → barra: Home · Giorno · Settimana · Scadenze  · Impostazioni
 //
-//  La scelta NON viene salvata (vedi RootView). I dati invece sì: esami, dubbi e
-//  attività restano sul telefono e ricompaiono quando torni in quella modalità.
+//  Salvo solo l'ULTIMA modalità scelta, per sapere quali sezioni mettere nella barra
+//  mentre sei in Home. La domanda però arriva comunque: l'app parte sempre dalla Home.
+//  Esami, dubbi e attività restano sul telefono in tutte e due le modalità.
 //
 
 import SwiftUI
@@ -21,6 +22,9 @@ enum AppMode: String, CaseIterable, Identifiable {
     case planner
 
     var id: String { rawValue }
+
+    /// Chiave in UserDefaults dell'ultima modalità scelta
+    static let storageKey = "appMode"
 
     var title: String {
         switch self {

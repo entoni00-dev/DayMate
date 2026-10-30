@@ -4,20 +4,17 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  La vista "radice": la barra delle sezioni in basso, UNA sola per tutta l'app.
+//  La vista "radice": la barra delle sezioni in basso.
 //
-//   ┌───────────────────────────────────────────┐
-//   │  🏠 Home                                   │
-//   │     schermata iniziale: Study / Plan my day│
-//   │       ├─ Study → Today (‹ Home)            │
-//   │       └─ Plan  → Plan  (‹ Home)            │
-//   ├───────────────────────────────────────────┤
-//   │ 🏠 Home  💬 Dubbi  📊 Progressi  ⚙️ Impost. │   ← TabView di Apple
-//   └───────────────────────────────────────────┘
+//  🧭 La barra ha SEMPRE la Home all'inizio e le Impostazioni alla fine.
+//  In mezzo ci sono le sezioni della modalità scelta (come entrare "da utente" o "da titolare"):
 //
-//  Ogni volta che apri l'app parti dalla Home: la domanda "studiare o organizzare
-//  la giornata?" è la prima cosa che vedi. Dubbi, Progressi e Impostazioni invece
-//  sono sempre a un tocco, qualunque cosa tu stia facendo.
+//   📚 STUDIO   🏠 Home · ☀️ Oggi   · 💬 Dubbi     · 📊 Progressi · ⚙️ Impostazioni
+//   🗓️ PLANNER  🏠 Home · ✅ Giorno · 📅 Settimana · 🚩 Scadenze  · ⚙️ Impostazioni
+//
+//  🏠 Home = la schermata iniziale "Study / Plan my day". Ogni volta che apri l'app
+//  parti da qui: tocchi "Study" e la barra diventa quella dello Studio, tocchi
+//  "Plan my day" e diventa quella del Planner. Per cambiare: si torna in Home.
 //
 //  📌 Nota per me: se esco dall'app con il tasto Home e rientro subito, iOS la tiene
 //  ancora aperta in memoria e ritrovo la schermata dov'ero. Ed è giusto: se stavo
@@ -27,42 +24,54 @@
 import SwiftUI
 import SwiftData
 
-/// Le 4 sezioni della barra in basso
-enum AppTab: String, CaseIterable {
-    case home, doubts, progress, settings
+/// Tutte le sezioni possibili della barra (quali si vedono dipende dalla modalità)
+enum AppTab: Hashable {
+    case home
+    case today, doubts, progress          // 📚 Studio
+    case day, week, deadlines             // 🗓️ Planner
+    case settings
 
     var title: String {
         switch self {
-        case .home:     return "Home"
-        case .doubts:   return tr("Doubts", "Dubbi")
-        case .progress: return tr("Progress", "Progressi")
-        case .settings: return tr("Settings", "Impostazioni")
+        case .home:      return "Home"
+        case .today:     return tr("Today", "Oggi")
+        case .doubts:    return tr("Doubts", "Dubbi")
+        case .progress:  return tr("Progress", "Progressi")
+        case .day:       return tr("Day", "Giorno")
+        case .week:      return tr("Week", "Settimana")
+        case .deadlines: return tr("Deadlines", "Scadenze")
+        case .settings:  return tr("Settings", "Impostazioni")
         }
     }
 
     var icon: String {
         switch self {
-        case .home:     return "house.fill"
-        case .doubts:   return "questionmark.bubble.fill"
-        case .progress: return "chart.bar.fill"
-        case .settings: return "gearshape.fill"
+        case .home:      return "house.fill"
+        case .today:     return "sun.max.fill"
+        case .doubts:    return "questionmark.bubble.fill"
+        case .progress:  return "chart.bar.fill"
+        case .day:       return "checklist"
+        case .week:      return "calendar"
+        case .deadlines: return "flag.fill"
+        case .settings:  return "gearshape.fill"
         }
     }
 }
 
 struct RootView: View {
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    /// La sezione aperta nella barra
+    /// La sezione aperta: all'apertura dell'app è sempre la Home
     @State private var tab: AppTab = .home
-    /// Il percorso dentro la Home (vuoto = schermata iniziale; [study] = dentro Study…)
-    @State private var homePath = NavigationPath()
-    /// Giorno / Settimana / Scadenze dentro Plan
-    @State private var plannerTab: PlannerTab = .day
+    /// Il giorno scelto nel Planner (condiviso da Giorno, Settimana e Scadenze)
+    @State private var plannerDay = Calendar.current.startOfDay(for: .now)
     @State private var showingAddDoubt = false
+    @State private var showingAddTask = false
     // 📌 Stanno QUI e non nelle viste figlie perché quando cambi lingua l'app viene
     // ridisegnata da capo (vedi .id(language)): così resti dove eri.
 
     // @AppStorage salva un valore semplice nelle impostazioni del telefono (UserDefaults)
+    /// L'ultima modalità scelta: decide quali sezioni ci sono nella barra mentre sei in Home
+    @AppStorage(AppMode.storageKey) private var modeRaw = AppMode.study.rawValue
     /// La lingua scelta dall'utente (di default italiano)
     @AppStorage(L10n.languageKey) private var language = AppLanguage.italian.rawValue
 
@@ -72,65 +81,35 @@ struct RootView: View {
     /// scenePhase dice se l'app è aperta (.active), in background o in passaggio
     @Environment(\.scenePhase) private var scenePhase
 
+    private var mode: AppMode { AppMode(rawValue: modeRaw) ?? .study }
+
     var body: some View {
         // TabView = la barra delle sezioni in basso.
         // selection: $tab → la TabView sa quale sezione è aperta e la cambia quando tocco un'icona
         TabView(selection: $tab) {
-            // 🏠 Home
-            NavigationStack(path: $homePath) {
-                OnboardingView { chosen in
-                    // aggiungere la modalità al percorso = "apri quella schermata sopra la Home"
-                    homePath.append(chosen)
-                }
-                .dmScreen()
-                .dmTabBar()
-                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
-                .navigationDestination(for: AppMode.self) { mode in
-                    switch mode {
-                    case .study:   StudyHomeView()
-                    case .planner: PlannerHomeView(tab: $plannerTab)
-                    }
-                }
-                .navigationDestination(for: Exam.self) { exam in
-                    ExamDetailView(exam: exam)
-                }
-            }
-            .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.icon) }
-            .tag(AppTab.home)
+            homeTab
 
-            // 💬 Dubbi
-            NavigationStack {
-                tabScreen(title: AppTab.doubts.title,
-                          addLabel: tr("New doubt", "Nuovo dubbio"),
-                          onAdd: { showingAddDoubt = true }) {
-                    DoubtsView(embedded: true)
-                }
+            // Le sezioni in mezzo cambiano con la modalità
+            if mode == .study {
+                todayTab
+                doubtsTab
+                progressTab
+            } else {
+                dayTab
+                weekTab
+                deadlinesTab
             }
-            .tabItem { Label(AppTab.doubts.title, systemImage: AppTab.doubts.icon) }
-            .tag(AppTab.doubts)
 
-            // 📊 Progressi
-            NavigationStack {
-                tabScreen(title: AppTab.progress.title) {
-                    StatsView(embedded: true)
-                }
-            }
-            .tabItem { Label(AppTab.progress.title, systemImage: AppTab.progress.icon) }
-            .tag(AppTab.progress)
-
-            // ⚙️ Impostazioni
-            NavigationStack {
-                SettingsView()
-                    .dmTabBar()
-            }
-            .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.icon) }
-            .tag(AppTab.settings)
+            settingsTab
         }
         // la sezione scelta nella barra è viola
         .tint(Theme.main)
         // .sheet = un foglio che sale dal basso sopra la schermata
         .sheet(isPresented: $showingAddDoubt) {
             AddDoubtSheet()
+        }
+        .sheet(isPresented: $showingAddTask) {
+            AddTaskSheet(day: plannerDay, isDeadline: tab == .deadlines)
         }
         // Quando cambia la lingua ricreo tutte le viste: così ogni tr("…", "…") viene rifatto
         .id(language)
@@ -149,18 +128,141 @@ struct RootView: View {
         .onAppear(perform: refreshReminders)
     }
 
-    /// Una sezione semplice della barra: intestazione + contenuto
-    private func tabScreen<Content: View>(title: String,
-                                          addLabel: String? = nil,
-                                          onAdd: @escaping () -> Void = {},
-                                          @ViewBuilder content: () -> Content) -> some View {
+    // MARK: - 🏠 Home
+
+    private var homeTab: some View {
+        NavigationStack {
+            OnboardingView(currentMode: mode) { chosen in
+                // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
+                withAnimation(.easeInOut) {
+                    modeRaw = chosen.rawValue
+                    // e apro la prima sezione della modalità scelta
+                    tab = chosen == .study ? .today : .day
+                }
+            }
+            .dmScreen()
+            .dmTabBar()
+        }
+        .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.icon) }
+        .tag(AppTab.home)
+    }
+
+    // MARK: - 📚 Studio
+
+    private var todayTab: some View {
+        NavigationStack {
+            StudyHomeView(onHome: goHome)
+                // .navigationDestination: "quando qualcuno apre un valore di questo tipo, mostra questa vista"
+                .navigationDestination(for: Exam.self) { exam in
+                    ExamDetailView(exam: exam)
+                }
+        }
+        .tabItem { Label(AppTab.today.title, systemImage: AppTab.today.icon) }
+        .tag(AppTab.today)
+    }
+
+    private var doubtsTab: some View {
+        NavigationStack {
+            screen(title: AppTab.doubts.title,
+                   addLabel: tr("New doubt", "Nuovo dubbio"),
+                   onAdd: { showingAddDoubt = true }) {
+                DoubtsView(embedded: true)
+            }
+        }
+        .tabItem { Label(AppTab.doubts.title, systemImage: AppTab.doubts.icon) }
+        .tag(AppTab.doubts)
+    }
+
+    private var progressTab: some View {
+        NavigationStack {
+            screen(title: AppTab.progress.title) {
+                StatsView(embedded: true)
+            }
+        }
+        .tabItem { Label(AppTab.progress.title, systemImage: AppTab.progress.icon) }
+        .tag(AppTab.progress)
+    }
+
+    // MARK: - 🗓️ Planner
+
+    private var dayTab: some View {
+        NavigationStack {
+            // la schermata "Plan" di Sketch: ‹ Home, il "+" e il titolo "Plan"
+            screen(title: tr("Plan", "Pianifica"), onHome: goHome,
+                   addLabel: tr("Add to your day", "Aggiungi alla giornata"),
+                   onAdd: { showingAddTask = true }) {
+                PlannerView(day: $plannerDay)
+            }
+            .navigationDestination(for: Exam.self) { exam in
+                ExamDetailView(exam: exam)
+            }
+        }
+        .tabItem { Label(AppTab.day.title, systemImage: AppTab.day.icon) }
+        .tag(AppTab.day)
+    }
+
+    private var weekTab: some View {
+        NavigationStack {
+            screen(title: AppTab.week.title,
+                   addLabel: tr("Add to your day", "Aggiungi alla giornata"),
+                   onAdd: { showingAddTask = true }) {
+                PlannerWeekView(day: $plannerDay) { chosen in
+                    // tocco un giorno → lo apro nella sezione "Giorno"
+                    plannerDay = chosen
+                    tab = .day
+                }
+            }
+        }
+        .tabItem { Label(AppTab.week.title, systemImage: AppTab.week.icon) }
+        .tag(AppTab.week)
+    }
+
+    private var deadlinesTab: some View {
+        NavigationStack {
+            screen(title: AppTab.deadlines.title,
+                   addLabel: tr("Add a deadline", "Aggiungi una scadenza"),
+                   onAdd: { showingAddTask = true }) {
+                PlannerDeadlinesView()
+            }
+            .navigationDestination(for: Exam.self) { exam in
+                ExamDetailView(exam: exam)
+            }
+        }
+        .tabItem { Label(AppTab.deadlines.title, systemImage: AppTab.deadlines.icon) }
+        .tag(AppTab.deadlines)
+    }
+
+    // MARK: - ⚙️ Impostazioni
+
+    private var settingsTab: some View {
+        NavigationStack {
+            SettingsView(mode: mode)
+                .dmTabBar()
+        }
+        .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.icon) }
+        .tag(AppTab.settings)
+    }
+
+    // MARK: - Pezzi in comune
+
+    /// Una sezione: intestazione (‹ Home, titolo, +) + il suo contenuto
+    private func screen<Content: View>(title: String,
+                                       onHome: (() -> Void)? = nil,
+                                       addLabel: String? = nil,
+                                       onAdd: @escaping () -> Void = {},
+                                       @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            ModeHeader(title: title, addLabel: addLabel, onAdd: onAdd)
+            ModeHeader(onHome: onHome, title: title, addLabel: addLabel, onAdd: onAdd)
             content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .dmScreen()
         .dmTabBar()
+    }
+
+    /// "‹ Home": apre la prima sezione della barra
+    private func goHome() {
+        withAnimation(.easeInOut) { tab = .home }
     }
 
     // MARK: - Promemoria

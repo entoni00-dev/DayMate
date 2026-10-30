@@ -130,6 +130,19 @@ final class StudySessionModel {
 
     // MARK: - Riscaldamento
 
+    /// 🔄 "Proponimi un altro passo minuscolo": se anche questo spaventa, ne cambio uno
+    /// con un tocco, senza rifare il check-in. (repeat-while = ripeto finché ne esce uno diverso)
+    func anotherWarmUp() {
+        let old = warmUp?.text
+        var next = FirstStepPicker.tinyStep(minutes: warmUp?.minutes ?? 2)
+        var tries = 0
+        while next.text == old && tries < 5 {
+            next = FirstStepPicker.tinyStep(minutes: warmUp?.minutes ?? 2)
+            tries += 1
+        }
+        warmUp = next
+    }
+
     func warmUpFinished(elapsedSeconds: Int) {
         session?.focusedSeconds += elapsedSeconds
         lastWarmUpSeconds = elapsedSeconds

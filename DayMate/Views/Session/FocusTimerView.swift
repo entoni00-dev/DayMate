@@ -16,6 +16,8 @@ struct FocusTimerView: View {
     let step: PlannedStep
     /// Callback: (secondi passati, l'utente ha premuto "Fatto"?)
     var onFinish: (_ elapsedSeconds: Int, _ markedDone: Bool) -> Void
+    /// 🔄 "Proponimi un altro passo minuscolo" (nil = niente bottone)
+    var onAnotherStep: (() -> Void)? = nil
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var countdown = Countdown()
@@ -50,8 +52,17 @@ struct FocusTimerView: View {
                 finish(markedDone: true)
             }
 
-            Button(tr("I'll stop here, that's fine", "Mi fermo qui, va bene così")) {
-                finish(markedDone: false)
+            HStack(spacing: 20) {
+                // se anche questo passo spaventa, ne chiedo un altro (il tempo continua)
+                if let onAnotherStep {
+                    Button(tr("Another tiny step", "Un altro passo minuscolo")) {
+                        Haptics.tap()
+                        onAnotherStep()
+                    }
+                }
+                Button(tr("I'll stop here", "Mi fermo qui")) {
+                    finish(markedDone: false)
+                }
             }
             .buttonStyle(QuietButtonStyle())
             .padding(.bottom, 8)
@@ -59,6 +70,11 @@ struct FocusTimerView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         // .onAppear viene chiamato quando la schermata compare
         .onAppear(perform: startIfNeeded)
+        // il passo è cambiato ("Un altro passo minuscolo"): lo aggiorno anche sulla schermata di blocco
+        .onChange(of: step.text) { _, newText in
+            LiveActivityManager.shared.changeStep(title: newText,
+                                                  subtitle: tr("Easier step first", "Prima un passo facilissimo"))
+        }
         .onDisappear {
             countdown.stop()
             NotificationManager.shared.cancel(id: NotificationManager.focusID)
