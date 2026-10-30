@@ -4,15 +4,20 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  Il blocco di studio vero e proprio ("Timer pt.2" di Sketch: anello giallo,
-//  il bradipo con gli occhiali che legge).
+//  Il timer di studio (schermata 05 di Sketch):
+//
+//        Math · step 3 of 6
+//           Read Ch. 2
+//          ( anello 3:42 )
+//     Phone down, one tiny step.
+//            ⏸      ✓
 //
 //  Due "orologi" diversi, e non vanno confusi:
-//   ⏱️ il TIMER DEL BLOCCO (grande anello): quanto manca alla pausa
+//   ⏱️ il TIMER DEL BLOCCO (l'anello): quanto manca alla pausa
 //   ⌛️ il tempo sul PASSO corrente: serve all'app per imparare quanto ci metti davvero
 //
-//  Dentro un blocco fai i passi uno dopo l'altro ("Step done ✓ → prossimo")
-//  senza fermare il timer. Quando il timer finisce: ⏸️ Time for a break!
+//  ✓ = "passo fatto": si passa al prossimo passo SENZA fermare il timer.
+//  Quando il timer finisce si va alla pausa ("Break time").
 //
 
 import SwiftUI
@@ -25,6 +30,7 @@ struct FocusBlockView: View {
     @State private var started = false
     @State private var finished = false
     @State private var blockMinutes = 0
+    @State private var showTip = false
 
     // Parcheggio dubbi
     @State private var showingDoubt = false
@@ -32,49 +38,79 @@ struct FocusBlockView: View {
     @State private var doubtSaved = false
 
     var body: some View {
-        TimerScreen(
-            eyebrow: tr("Block \(model.blocksDone + 1) · step \(model.stepNumber) of \(model.stepTotal)",
-                        "Blocco \(model.blocksDone + 1) · passo \(model.stepNumber) di \(model.stepTotal)"),
-            title: model.currentStep?.title ?? "",
-            subtitle: model.currentStep.map { step in
-                tr("≈ \(model.exam.estimatedMinutes(for: step)) min · on this step for \(TimeInterval(model.currentStepSeconds).mmss)",
-                   "≈ \(model.exam.estimatedMinutes(for: step)) min · su questo passo da \(TimeInterval(model.currentStepSeconds).mmss)")
-            },
-            progress: countdown.progress,
-            active: true,
-            pose: .reading,
-            time: countdown.remaining.mmss,
-            caption: tr("until your break", "alla pausa")
-        ) {
-            if let step = model.currentStep {
-                StepTipView(step: step)
-                    // .id: quando cambia passo il consiglio si richiude
-                    .id(step.persistentModelID)
+        VStack(spacing: 18) {
+            // Titolo: esame, numero del passo e cosa fare
+            VStack(spacing: 6) {
+                Text("\(model.exam.name) · " + tr("step \(model.stepNumber) of \(model.stepTotal)",
+                                                  "passo \(model.stepNumber) di \(model.stepTotal)"))
+                    .font(.system(.subheadline, weight: .medium))
+                    .foregroundStyle(Theme.secondary)
+                Text(model.currentStep?.title ?? "")
+                    .font(.dmTitle)
+                    .foregroundStyle(Theme.text)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.7)
             }
-        } buttons: {
-            Button {
-                completeStep()
-            } label: {
-                Label(tr("Step done, next", "Passo fatto, avanti"), systemImage: "checkmark")
+            .padding(.horizontal, 24)
+
+            Spacer(minLength: 8)
+
+            TimerRing(progress: countdown.progress, time: countdown.remaining.mmss)
+
+            Text(countdown.isPaused ? tr("Paused. Take your time.", "In pausa. Con calma.")
+                                    : tr("Phone down, one tiny step.", "Telefono giù, un piccolo passo."))
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+
+            // Il consiglio del passo, aperto solo se lo chiedo
+            if showTip, let step = model.currentStep {
+                Text(step.kind.tip)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text)
+                    .padding(14)
+                    .cardBackground(radius: 16)
+                    .padding(.horizontal, 20)
+                    .transition(.opacity)
             }
-            .buttonStyle(PillButtonStyle(variant: .dark))
 
-            Button(tr("Have a break", "Fai una pausa")) { finish(.breakNow) }
-                .buttonStyle(PillButtonStyle(variant: .honey))
+            Spacer(minLength: 8)
 
-            HStack(spacing: 24) {
+            // ⏸ / ▶︎ e ✓
+            HStack(spacing: 28) {
+                RoundTimerButton(systemName: countdown.isPaused ? "play.fill" : "pause.fill",
+                                 accessibilityTitle: countdown.isPaused ? tr("Resume", "Riprendi") : tr("Pause", "Pausa"),
+                                 action: togglePause)
+                RoundTimerButton(systemName: "checkmark", prominent: true,
+                                 accessibilityTitle: tr("Step done", "Passo fatto"),
+                                 action: completeStep)
+            }
+
+            // Le azioni meno usate, piccole e discrete
+            HStack(spacing: 18) {
+                Button {
+                    withAnimation { showTip.toggle() }
+                } label: {
+                    Label(tr("Tip", "Consiglio"), systemImage: "lightbulb")
+                }
                 Button {
                     showingDoubt = true
                 } label: {
                     Label(doubtSaved ? tr("Saved!", "Salvato!") : tr("Doubt", "Dubbio"),
-                          systemImage: doubtSaved ? "checkmark" : "bubble.left.and.exclamationmark.bubble.right")
+                          systemImage: doubtSaved ? "checkmark" : "questionmark.bubble")
                 }
-                .buttonStyle(TextLinkStyle(color: Theme.rust))
-
-                Button(tr("Stop for today", "Basta per oggi")) { finish(.stop) }
-                    .buttonStyle(TextLinkStyle())
+                Button {
+                    finish(.breakNow)
+                } label: {
+                    Label(tr("Break", "Pausa"), systemImage: "cup.and.saucer")
+                }
+                Button(tr("Stop", "Basta")) { finish(.stop) }
             }
+            .buttonStyle(QuietButtonStyle())
+            .font(.footnote)
+            .padding(.bottom, 8)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         // .onAppear viene chiamato quando la schermata compare
         .onAppear(perform: startIfNeeded)
         .onDisappear {
@@ -86,14 +122,15 @@ struct FocusBlockView: View {
             Button(tr("Save", "Salva")) { saveDoubt() }
             Button(tr("Cancel", "Annulla"), role: .cancel) { doubtText = "" }
         } message: {
-            Text(tr("Write it down and move on: you'll find it later in Study → Doubts. So you don't get stuck or grab your phone to look it up.",
-                    "Scrivilo e vai avanti: lo ritrovi dopo in Studio → Dubbi. Così non ti blocchi e non prendi il telefono per cercarlo."))
+            Text(tr("Write it down and keep going: you'll find it later in Doubts.",
+                    "Scrivilo e vai avanti: lo ritrovi dopo in Dubbi."))
         }
     }
 
     // MARK: - Azioni
 
     private func startIfNeeded() {
+        // onAppear a volte viene chiamato due volte: faccio partire il timer una volta sola
         guard !started else { return }
         started = true
 
@@ -103,8 +140,11 @@ struct FocusBlockView: View {
         model.blockDidStart()
         countdown.onFinish = { finish(.timeUp) }
         countdown.start(seconds: seconds)
+        scheduleNotification(after: seconds)
+    }
 
-        // Se il telefono è bloccato, l'avviso arriva come notifica con il suo suono
+    /// Se il telefono è bloccato, la fine del blocco arriva come notifica con il suo suono
+    private func scheduleNotification(after seconds: TimeInterval) {
         NotificationManager.shared.scheduleBreakTime(
             after: seconds,
             studiedMinutes: blockMinutes,
@@ -112,12 +152,22 @@ struct FocusBlockView: View {
         )
     }
 
+    private func togglePause() {
+        if countdown.isPaused {
+            countdown.resume()
+            scheduleNotification(after: countdown.remaining)   // rimetto la notifica col tempo che manca
+        } else {
+            countdown.pause()
+            NotificationManager.shared.cancel(id: NotificationManager.focusID)
+        }
+    }
+
     private func completeStep() {
         Haptics.success()
         var hasMore = true
-        // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
         withAnimation(.spring(response: 0.4)) {
             hasMore = model.completeCurrentStep()
+            showTip = false
         }
         if !hasMore { finish(.allDone) }
     }

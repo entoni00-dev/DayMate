@@ -11,12 +11,12 @@
 //
 //  🧭 Come si entra nell'app:
 //
-//   PRIMA VOLTA:  "Slooow" ─► 3 schermate di presentazione ─► "Come vuoi usare DayMate?"
-//                                                               │
-//              ┌────────────────────────────────────────────────┴───────────────┐
-//              ▼                                                                ▼
-//   📚 MODALITÀ STUDIO                                              🗓️ MODALITÀ PLANNER
-//   [ Esami | Dubbi | Coach | Progressi ]   + Esame/Dubbio  ⚙️      [ Giorno | Settimana | Scadenze ]  + Attività  ⚙️
+//   PRIMA VOLTA:  schermata iniziale "DayMate — One tiny step at a time"
+//                          │
+//              ┌───────────┴──────────────┐
+//              ▼                          ▼
+//   📚 MODALITÀ STUDIO              🗓️ MODALITÀ PLANNER
+//   [ Oggi | Dubbi | Coach | Progressi ]   [ Giorno | Settimana | Scadenze ]
 //
 //   DALLA SECONDA VOLTA: si apre direttamente la modalità scelta.
 //   Per cambiarla: ⚙️ Impostazioni → Modalità (come "uscire ed entrare" con un altro profilo).
@@ -54,9 +54,8 @@ struct RootView: View {
                         .transition(.opacity)
                 }
             } else {
-                // Se l'introduzione è già stata vista ma manca la modalità
-                // (es. aggiornamento dalla versione precedente) chiedo solo quella.
-                OnboardingView(onlyModeChoice: hasSeenOnboarding) { chosen in
+                // La schermata iniziale: "Study" oppure "Plan my day"
+                OnboardingView { chosen in
                     // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
                     withAnimation(.easeInOut) {
                         modeRaw = chosen.rawValue
@@ -72,7 +71,9 @@ struct RootView: View {
         .onChange(of: modeRaw) { _, _ in path = NavigationPath() }
         // Date, DatePicker ecc. nella stessa lingua dei testi
         .environment(\.locale, AppLanguage(rawValue: language)?.locale ?? L10n.locale)
-        .tint(Theme.rust)
+        .tint(Theme.main)
+        // Il design Ube night è solo scuro
+        .preferredColorScheme(.dark)
     }
 }
 

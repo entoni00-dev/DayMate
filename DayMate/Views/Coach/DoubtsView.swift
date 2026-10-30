@@ -34,17 +34,17 @@ struct DoubtsView: View {
             if !embedded {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
-                        BackPill(title: "Coach")
+                        TopLink(title: "Coach", showsChevron: true)
                         Spacer()
                         Button {
                             showingAdd = true
                         } label: {
                             Label(tr("Doubt", "Dubbio"), systemImage: "plus")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Theme.background)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(Theme.cocoa, in: Capsule())
+                                .background(Theme.main, in: Capsule())
                         }
                         .buttonStyle(.plain)
                     }
@@ -56,7 +56,7 @@ struct DoubtsView: View {
             List {
                 // 💡 Suggerimento di TipKit
                 TipView(DoubtTip())
-                    .tint(Theme.rust)
+                    .tint(Theme.lightMain)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
@@ -77,6 +77,7 @@ struct DoubtsView: View {
                         }
                         .onDelete { offsets in delete(offsets, from: open) }
                     }
+                    .listRowBackground(Theme.card)
                 }
 
                 if !resolved.isEmpty {
@@ -86,6 +87,7 @@ struct DoubtsView: View {
                         }
                         .onDelete { offsets in delete(offsets, from: resolved) }
                     }
+                    .listRowBackground(Theme.card)
                 }
 
                 if !AITutor.isAvailable && !open.isEmpty {
@@ -93,7 +95,7 @@ struct DoubtsView: View {
                         Text(tr("Without the AI tutor: take this list to your professor's office hours or ask a classmate. A written doubt is already half solved.",
                                 "Senza Tutor AI: porta questa lista al ricevimento del prof o chiedi a un compagno. Un dubbio scritto è già mezzo risolto."))
                             .font(.footnote)
-                            .foregroundStyle(Theme.mute)
+                            .foregroundStyle(Theme.secondary)
                     }
                     .listRowBackground(Color.clear)
                 }
@@ -111,23 +113,23 @@ struct DoubtsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(doubt.text)
                 .font(.body.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(Theme.text)
                 .strikethrough(doubt.isResolved)
 
             Text([doubt.examName, doubt.topic, doubt.createdAt.formatted(.relative(presentation: .named).locale(L10n.locale))]
                     .filter { !$0.isEmpty }
                     .joined(separator: " · "))
                 .font(.caption)
-                .foregroundStyle(Theme.mute)
+                .foregroundStyle(Theme.secondary)
 
             if let answer = doubt.answer {
                 Text(answer)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.text)
                     .lineLimit(6)
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.lilacSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
             HStack(spacing: 10) {
@@ -143,7 +145,7 @@ struct DoubtsView: View {
                             .font(.caption.bold())
                     }
                     .buttonStyle(.borderless)
-                    .tint(Theme.rust)
+                    .tint(Theme.lightMain)
                 }
 
                 Spacer()
@@ -157,7 +159,7 @@ struct DoubtsView: View {
                         .font(.caption.bold())
                 }
                 .buttonStyle(.borderless)
-                .tint(Theme.leaf)
+                .tint(Theme.accent)
             }
         }
         .padding(.vertical, 4)

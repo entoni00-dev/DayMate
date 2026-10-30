@@ -36,7 +36,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
-                BackPill(title: mode.title)
+                TopLink(title: mode.title, showsChevron: true)
                 ScreenHeader(title: tr("Settings", "Impostazioni"))
             }
             .padding(.horizontal, 24)
@@ -46,13 +46,13 @@ struct SettingsView: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: mode.icon)
-                            .foregroundStyle(Theme.ink)
+                            .foregroundStyle(Theme.text)
                             .frame(width: 34, height: 34)
-                            .background(mode.color, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(tr("You're using", "Stai usando"))
                                 .font(.caption)
-                                .foregroundStyle(Theme.mute)
+                                .foregroundStyle(Theme.secondary)
                             Text(mode.choiceTitle)
                                 .font(.headline)
                         }
@@ -69,6 +69,7 @@ struct SettingsView: View {
                     Text(tr("Your data stays on the phone: exams, doubts and tasks are still there when you come back.",
                             "I tuoi dati restano sul telefono: esami, dubbi e attività ci sono ancora quando torni."))
                 }
+                .listRowBackground(Theme.card)
 
                 // MARK: Lingua
                 Section {
@@ -83,6 +84,7 @@ struct SettingsView: View {
                     Text(tr("Steps already created stay in the language they were created in.",
                             "I passi già creati restano nella lingua in cui sono stati creati."))
                 }
+                .listRowBackground(Theme.card)
 
                 if mode == .study {
                     // MARK: Ritmo
@@ -96,21 +98,13 @@ struct SettingsView: View {
                         Picker(tr("Long break (every 4 blocks)", "Pausa lunga (ogni 4 blocchi)"), selection: $longBreak) {
                             ForEach([10, 15, 20, 30], id: \.self) { Text("\($0) min").tag($0) }
                         }
-
-                        // Anteprima del ritmo con 2 ore di studio
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(tr("Example: 2 hours of study", "Esempio: 2 ore di studio"))
-                                .font(.caption.bold())
-                                .foregroundStyle(Theme.mute)
-                            DayScheduleView(studyMinutes: 120)
-                        }
-                        .padding(.vertical, 4)
                     } header: {
                         Text(tr("Study / break rhythm", "Ritmo studio / pausa"))
                     } footer: {
                         Text(tr("The first blocks start shorter depending on how you feel (e.g. 5 → 10 → 15 min if you're stuck) and grow up to this length. 25 + 5 minutes is the classic \"Pomodoro\": a good starting point, not a scientific rule.",
                                 "I primi blocchi partono più corti in base a come ti senti (es. 5 → 10 → 15 min se sei bloccato) e crescono fino a questa durata. 25 + 5 minuti è il classico \"Pomodoro\": un buon punto di partenza, non una regola scientifica."))
                     }
+                    .listRowBackground(Theme.card)
                 }
                 if mode == .planner {
                     // MARK: Planner
@@ -119,14 +113,15 @@ struct SettingsView: View {
                             Text(tr("Water goal: \(waterGoal) glasses", "Obiettivo acqua: \(waterGoal) bicchieri"))
                         }
                     }
+                    .listRowBackground(Theme.card)
                 }
                 if mode == .study {
                     // MARK: Avvisi
                     Section {
                         Toggle(tr("Alarm sound", "Suono di sveglia"), isOn: $soundEnabled)
-                            .tint(Theme.honey)
+                            .tint(Theme.main)
                         Toggle(tr("Notifications when locked", "Notifiche a schermo bloccato"), isOn: $notificationsEnabled)
-                            .tint(Theme.honey)
+                            .tint(Theme.main)
                         Button(tr("Try the break sound", "Prova il suono della pausa")) { SoundPlayer.shared.play(.pause, repeats: 1) }
                         Button(tr("Try the study sound", "Prova il suono dello studio")) { SoundPlayer.shared.play(.study, repeats: 1) }
                     } header: {
@@ -135,6 +130,7 @@ struct SettingsView: View {
                         Text(tr("End of block: \"Time for a break!\". End of break: \"Welcome back!\". The sound plays even with the silent switch on, like an alarm. Notifications are local: no server.",
                                 "A fine blocco: \"È tempo di una pausa!\". A fine pausa: \"Bentornato!\". Il suono si sente anche con l'interruttore silenzioso, come una sveglia. Le notifiche sono locali: nessun server."))
                     }
+                    .listRowBackground(Theme.card)
                 }
                 // MARK: Privacy
                 Section("Privacy") {
@@ -144,22 +140,24 @@ struct SettingsView: View {
                             .font(.subheadline)
                     } icon: {
                         Image(systemName: "lock.shield.fill")
-                            .foregroundStyle(Theme.leaf)
+                            .foregroundStyle(Theme.accent)
                     }
                 }
+                .listRowBackground(Theme.card)
 
                 Section {
-                    Button(tr("Watch the intro again", "Rivedi l'introduzione")) {
+                    Button(tr("Back to the start screen", "Torna alla schermata iniziale")) {
                         hasSeenOnboarding = false
                     }
                     Button(tr("Delete all data", "Cancella tutti i dati"), role: .destructive) {
                         confirmReset = true
                     }
                 }
+                .listRowBackground(Theme.card)
 
                 Section {
                     HStack(spacing: 12) {
-                        SlothView(pose: .head)
+                        BlobView(pose: .hello)
                             .frame(width: 44, height: 44)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("DayMate 2.0")
@@ -167,14 +165,15 @@ struct SettingsView: View {
                             Text(tr("Apple Foundation Program project.\nChallenge: help students overcome the anxiety of starting and take real breaks instead of scrolling.",
                                     "Progetto per l'Apple Foundation Program.\nChallenge: aiutare gli studenti a superare l'ansia di iniziare e a fare pause vere invece di scrollare."))
                                 .font(.caption)
-                                .foregroundStyle(Theme.mute)
+                                .foregroundStyle(Theme.secondary)
                         }
                     }
                     .padding(.vertical, 4)
                 }
+                .listRowBackground(Theme.card)
             }
             .scrollContentBackground(.hidden)
-            .tint(Theme.rust)
+            .tint(Theme.lightMain)
         }
         .dmScreen()
         // .confirmationDialog chiede conferma prima di un'azione che non si può annullare

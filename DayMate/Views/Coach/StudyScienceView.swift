@@ -29,9 +29,9 @@ struct StudyScienceView: View {
 
         var color: Color {
             switch self {
-            case .high:     return Theme.leaf
-            case .moderate: return Theme.honey
-            case .low:      return Theme.rust
+            case .high:     return Theme.accent
+            case .moderate: return Theme.main
+            case .low:      return Theme.lightMain
             }
         }
     }
@@ -89,7 +89,7 @@ struct StudyScienceView: View {
         // ScrollView: se il contenuto è più alto dello schermo, si scorre
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                BackPill(title: "Coach")
+                TopLink(title: "Coach", showsChevron: true)
                 ScreenHeader(eyebrow: tr("Research says", "Dice la ricerca"),
                              title: tr("What really works", "Cosa funziona davvero"),
                              subtitle: tr("Not all study techniques are equal. A large review of hundreds of studies (Dunlosky and colleagues, 2013) compared them: here's what came out and how DayMate uses it.",
@@ -100,8 +100,8 @@ struct StudyScienceView: View {
                         HStack {
                             Text(technique.emoji).font(.title2)
                             Text(technique.name)
-                                .font(.dmHeadline)
-                                .foregroundStyle(Theme.ink)
+                                .font(.dmRowTitle)
+                                .foregroundStyle(Theme.text)
                             Spacer()
                             Text(technique.rating.title)
                                 .font(.caption.bold())
@@ -112,11 +112,11 @@ struct StudyScienceView: View {
                         }
                         Text(technique.what)
                             .font(.subheadline)
-                            .foregroundStyle(Theme.ink)
+                            .foregroundStyle(Theme.text)
                             .fixedSize(horizontal: false, vertical: true)
                         Label(technique.inTheApp, systemImage: "app.badge.checkmark")
                             .font(.caption)
-                            .foregroundStyle(Theme.mute)
+                            .foregroundStyle(Theme.secondary)
                     }
                     .dmCard()
                 }
@@ -124,7 +124,7 @@ struct StudyScienceView: View {
                 Text(tr("Note: \"not very effective\" doesn't mean useless, but that it gives little for the time it takes, especially if it's the only thing you do.",
                         "Nota: \"poco efficace\" non vuol dire inutile, ma che rende poco rispetto al tempo che richiede, soprattutto se è l'unica cosa che fai."))
                     .font(.footnote)
-                    .foregroundStyle(Theme.mute)
+                    .foregroundStyle(Theme.secondary)
                     .padding(.top, 4)
             }
             .padding(.horizontal, 24)

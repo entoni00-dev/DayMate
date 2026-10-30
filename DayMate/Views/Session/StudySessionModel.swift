@@ -11,14 +11,14 @@
 //  passo corrente, tempo reale del passo...), quindi ho spostato tutto in una classe
 //  @Observable. Le viste mostrano lo stato e chiamano metodi; le decisioni stanno qui.
 //
-//  🔁 Il ciclo completo:
+//  🔁 Il ciclo completo (le schermate Ube night):
 //
-//   checkIn ─► [riscaldamento → scelta] ─► ready ─► BLOCCO ─► ⏸️ "È TEMPO DI UNA PAUSA"
-//                (solo se ansia/blocco)        ▲                          │
-//                                              │                          ▼
-//                                   ▶️ "ORA SI TORNA A STUDIARE" ◄── pausa vera
+//   Mood ─┬─ Ready / Tired ──────────────────► TIMER ──(tempo finito)──► BREAK ("Nice work!")
+//         ├─ Stuck ──► riscaldamento 2' ─► scelta ─┘    ▲                     │
+//         └─ Stressed ──► BREAK subito ("Start with a break")                  ▼
+//                                                       └───── WELCOME BACK ◄──┘
 //
-//   In ogni momento: "mi fermo" ─► checkOut (umore) ─► riepilogo
+//   In ogni momento: "basta per oggi" ─► umore di fine ─► riepilogo
 //
 
 import Foundation
@@ -29,22 +29,19 @@ import Observation
 final class StudySessionModel {
 
     enum Phase: Hashable {
-        case checkIn        // come ti senti?
-        case warmUpPreview  // il passo minuscolo (solo ansia/bloccato)
-        case warmUp         // timer del riscaldamento (2-3 min)
-        case choice         // continuo / pausa / mi fermo
-        case ready          // "Blocco N: X minuti" + primo passo → Via!
-        case block          // blocco di studio con timer
-        case pauseAlert     // ⏸️ È TEMPO DI UNA PAUSA
-        case breakTime      // pausa vera
-        case studyAlert     // ▶️ ORA SI TORNA A STUDIARE
+        case checkIn        // "How do you feel?"
+        case warmUp         // riscaldamento di 2 minuti (solo "Stuck")
+        case choice         // dopo il riscaldamento: continuo / pausa / mi fermo
+        case block          // il timer di studio
+        case breakTime      // "Break time"
+        case studyAlert     // "Welcome back!"
         case checkOut       // come ti senti ora?
         case summary        // riepilogo
     }
 
     /// Come è finito un blocco
     enum BlockEnd {
-        case timeUp      // timer scaduto → avviso pausa
+        case timeUp      // timer scaduto → pausa
         case breakNow    // l'utente ha chiesto una pausa prima
         case stop        // l'utente si ferma
         case allDone     // passi finiti!
@@ -53,7 +50,7 @@ final class StudySessionModel {
     let exam: Exam
 
     private(set) var phase: Phase = .checkIn
-    private(set) var mood: Mood = .great
+    private(set) var mood: Mood = .ready
     private(set) var session: StudySession?
     private(set) var warmUp: PlannedStep?
     private(set) var currentStep: StudyStep?
@@ -61,6 +58,9 @@ final class StudySessionModel {
     private(set) var lastBlockMinutes = 0
     private(set) var lastWarmUpSeconds = 0
     private(set) var allDone = false
+    /// true se la pausa arriva dopo un blocco finito ("Nice work!"),
+    /// false se è la pausa iniziale di "Stressed"
+    private(set) var breakAfterBlock = false
 
     /// Quando ho iniziato il passo corrente (per misurare il tempo reale)
     private(set) var stepStartedAt: Date?
@@ -92,11 +92,6 @@ final class StudySessionModel {
     var stepNumber: Int { min(exam.doneCount + 1, max(exam.steps.count, 1)) }
     var stepTotal: Int { exam.steps.count }
 
-    /// Si può ancora tornare alla scelta dell'umore? Solo se non è stato fatto niente.
-    var canGoBackToMood: Bool {
-        blocksDone == 0 && (session?.focusedSeconds ?? 0) == 0 && (session?.stepsCompleted ?? 0) == 0
-    }
-
     /// Secondi passati sul passo corrente (si aggiorna quando la vista si ridisegna)
     var currentStepSeconds: Int {
         guard let stepStartedAt else { return 0 }
@@ -120,33 +115,20 @@ final class StudySessionModel {
             // Non c'è niente da fare: tutti i passi sono già completati
             allDone = true
             phase = .checkOut
-        } else if let warm = FirstStepPicker.warmUp(for: selected, next: currentStep) {
+        } else if selected == .stressed {
+            // "Start with a break": prima si respira, poi si studia
+            breakAfterBlock = false
+            phase = .breakTime
+        } else if let warm = FirstStepPicker.warmUp(for: selected) {
+            // "Easier step first": un gesto minuscolo da 2 minuti
             warmUp = warm
-            phase = .warmUpPreview
+            phase = .warmUp
         } else {
-            phase = .ready
+            phase = .block
         }
     }
 
-    /// "‹ Mood": torno alla scelta dell'umore senza lasciare una sessione vuota
-    func backToCheckIn() {
-        guard canGoBackToMood else { return }
-        if let session { context?.delete(session) }
-        session = nil
-        warmUp = nil
-        stepStartedAt = nil
-        phase = .checkIn
-    }
-
     // MARK: - Riscaldamento
-
-    func shrinkWarmUp() {
-        warmUp = FirstStepPicker.tinyStep(minutes: 2)
-    }
-
-    func startWarmUp() {
-        phase = .warmUp
-    }
 
     func warmUpFinished(elapsedSeconds: Int) {
         session?.focusedSeconds += elapsedSeconds
@@ -157,10 +139,11 @@ final class StudySessionModel {
     // MARK: - Scelte dell'utente
 
     func continueStudying() {
-        phase = currentStep == nil ? .checkOut : .ready
+        phase = currentStep == nil ? .checkOut : .block
     }
 
     func takeBreak() {
+        breakAfterBlock = false
         phase = .breakTime
     }
 
@@ -169,10 +152,6 @@ final class StudySessionModel {
     }
 
     // MARK: - Blocco di studio
-
-    func startBlock() {
-        phase = .block
-    }
 
     /// Chiamato quando la schermata del blocco appare: parte il cronometro del passo
     func blockDidStart() {
@@ -207,8 +186,10 @@ final class StudySessionModel {
         lastBlockMinutes = max(1, Int((Double(elapsedSeconds) / 60).rounded()))
 
         switch reason {
-        case .timeUp:   phase = .pauseAlert
-        case .breakNow: phase = .breakTime
+        case .timeUp, .breakNow:
+            // "Break time" con la card "Nice work!"
+            breakAfterBlock = true
+            phase = .breakTime
         case .stop:     phase = .checkOut
         case .allDone:
             allDone = true
@@ -227,12 +208,12 @@ final class StudySessionModel {
 
     // MARK: - Pausa
 
-    /// L'utente salta la pausa dall'avviso
+    /// L'utente salta la pausa
     func skipBreak() {
-        phase = currentStep == nil ? .checkOut : .ready
+        phase = currentStep == nil ? .checkOut : .block
     }
 
-    /// Il timer della pausa è finito → "ORA SI TORNA A STUDIARE"
+    /// Il timer della pausa è finito → "Welcome back!"
     func breakTimeUp() {
         phase = .studyAlert
     }

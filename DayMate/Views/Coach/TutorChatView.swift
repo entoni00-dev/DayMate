@@ -31,16 +31,16 @@ struct TutorChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                BackPill(title: "Coach")
+                TopLink(title: "Coach", showsChevron: true)
                 Spacer()
                 Button {
                     chat.reset()
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                         .font(.headline)
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.lightMain)
                         .frame(width: 44, height: 44)
-                        .background(Theme.pillGray, in: Circle())
+                        .background(Theme.card, in: Circle())
                 }
                 .disabled(chat.messages.isEmpty)
                 .accessibilityLabel(tr("New conversation", "Nuova conversazione"))
@@ -106,10 +106,10 @@ struct TutorChatView: View {
                 .foregroundStyle(.secondary)
         } icon: {
             Image(systemName: "lock.shield.fill")
-                .foregroundStyle(Theme.leaf)
+                .foregroundStyle(Theme.accent)
         }
         .padding(12)
-        .background(Theme.cream, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func bubble(_ message: TutorChat.Message) -> some View {
@@ -117,9 +117,9 @@ struct TutorChatView: View {
             if message.fromUser { Spacer(minLength: 40) }
             Text(markdown(message.text))
                 .font(.body)
-                .foregroundStyle(message.fromUser ? Color.white : Theme.ink)
+                .foregroundStyle(message.fromUser ? Theme.background : Theme.text)
                 .padding(12)
-                .background(message.fromUser ? Theme.cocoa : Color.white,
+                .background(message.fromUser ? Theme.main : Theme.card,
                             in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .textSelection(.enabled)
             if !message.fromUser { Spacer(minLength: 40) }
@@ -140,7 +140,7 @@ struct TutorChatView: View {
                         .lineLimit(1)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.honeySoft, in: Capsule())
+                        .background(Theme.highlight, in: Capsule())
                 }
 
                 ForEach(AITutor.QuickAction.allCases) { action in
@@ -151,7 +151,7 @@ struct TutorChatView: View {
                     .font(.caption.bold())
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Theme.lilacSoft, in: Capsule())
+                    .background(Theme.highlight, in: Capsule())
                     .disabled(chat.isThinking)
                 }
             }
@@ -167,7 +167,7 @@ struct TutorChatView: View {
                 .focused($inputFocused)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
             Button {
                 let text = input
@@ -176,13 +176,13 @@ struct TutorChatView: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 34))
-                    .foregroundStyle(Theme.cocoa)
+                    .foregroundStyle(Theme.main)
             }
             .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty || chat.isThinking)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.bar)
+        .background(Theme.background)
     }
 
     /// Il modello risponde spesso con **grassetti** e liste: li rendo come Markdown

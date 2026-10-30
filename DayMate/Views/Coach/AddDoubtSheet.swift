@@ -54,13 +54,13 @@ struct AddDoubtSheet: View {
                     .font(.body)
                     .focused($textFocused)
                     .padding(16)
-                    .background(Theme.cream, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
                 if !upcoming.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(tr("Exam", "Esame"))
-                            .font(.dmHeadline)
-                            .foregroundStyle(Theme.ink)
+                            .font(.dmRowTitle)
+                            .foregroundStyle(Theme.text)
                         chips(options: [""] + upcoming.map(\.name),
                               label: { $0.isEmpty ? tr("General", "Generale") : $0 },
                               selection: $examName)
@@ -70,8 +70,8 @@ struct AddDoubtSheet: View {
                 if let selectedExam, !selectedExam.topics.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(tr("Topic", "Argomento"))
-                            .font(.dmHeadline)
-                            .foregroundStyle(Theme.ink)
+                            .font(.dmRowTitle)
+                            .foregroundStyle(Theme.text)
                         chips(options: [""] + selectedExam.topics,
                               label: { $0.isEmpty ? tr("Not sure", "Non so") : $0 },
                               selection: $topic)
@@ -82,15 +82,15 @@ struct AddDoubtSheet: View {
                 Text(tr("You'll find it in Study → Doubts. With the AI tutor you can ask it there; otherwise take it to your professor or a classmate.",
                         "Lo ritrovi in Studio → Dubbi. Con il Tutor AI puoi chiederlo lì; altrimenti portalo al prof o a un compagno."))
                     .font(.caption)
-                    .foregroundStyle(Theme.mute)
+                    .foregroundStyle(Theme.secondary)
 
                 Button(tr("Save doubt", "Salva il dubbio"), action: save)
-                    .buttonStyle(PillButtonStyle(variant: .dark))
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canSave)
             }
             .padding(24)
         }
-        .background(Theme.paper.ignoresSafeArea())
+        .background(Theme.background.ignoresSafeArea())
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .animation(.snappy, value: examName)
@@ -114,10 +114,10 @@ struct AddDoubtSheet: View {
                     } label: {
                         Text(label(option))
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(isOn ? .white : Theme.ink)
+                            .foregroundStyle(isOn ? .white : Theme.text)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(isOn ? Theme.cocoa : Theme.cream, in: Capsule())
+                            .background(isOn ? Theme.main : Theme.highlight, in: Capsule())
                     }
                     .buttonStyle(.plain)
                 }

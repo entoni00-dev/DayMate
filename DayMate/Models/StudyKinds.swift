@@ -149,6 +149,7 @@ enum StepKind: String, CaseIterable {
     case exercise     // esercizio
     case review       // ripasso attivo (fase 2)
     case simulation   // simulazione d'esame (fase 3)
+    case custom       // passo scritto a mano dall'utente ("Read Ch. 2")
 
     var emoji: String {
         switch self {
@@ -160,6 +161,7 @@ enum StepKind: String, CaseIterable {
         case .exercise:   return "✏️"
         case .review:     return "🔁"
         case .simulation: return "🎯"
+        case .custom:     return "✅"
         }
     }
 
@@ -173,6 +175,7 @@ enum StepKind: String, CaseIterable {
         case .exercise:   return tr("Exercise", "Esercizio")
         case .review:     return tr("Active review", "Ripasso attivo")
         case .simulation: return tr("Mock exam", "Simulazione")
+        case .custom:     return tr("Tiny step", "Piccolo passo")
         }
     }
 
@@ -209,6 +212,9 @@ enum StepKind: String, CaseIterable {
         case .review:
             return tr("Don't re-read: ask yourself the questions your professor would ask and answer out loud. Mark what you can't answer and check only that.",
                       "Non rileggere: fatti le domande che ti farebbe il prof e rispondi a voce. Segna ciò che non ti viene e ricontrolla solo quello.")
+        case .custom:
+            return tr("Work on just this for the time of the block. At the end, close the book and say out loud the 3 key points: that's what makes them stick.",
+                      "Lavora solo su questo per il tempo del blocco. Alla fine chiudi il libro e ripeti a voce i 3 punti chiave: è questo che li fissa.")
         case .simulation:
             return tr("Practise like the real exam: time limit, no notes, phone in another room. Then correct it and list your mistakes: that's your review list.",
                       "Allenati come all'esame: tempo limitato, niente appunti, telefono in un'altra stanza. Poi correggi e annota gli errori: sono la tua lista di ripasso.")

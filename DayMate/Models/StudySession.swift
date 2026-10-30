@@ -52,7 +52,7 @@ final class StudySession {
     // MARK: - Comodità (non salvate)
 
     var moodBefore: Mood {
-        Mood(rawValue: moodBeforeRaw) ?? .great
+        Mood(rawValue: moodBeforeRaw) ?? .ready
     }
 
     var moodAfter: Mood? {

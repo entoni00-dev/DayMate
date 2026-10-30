@@ -4,92 +4,78 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  I quattro stati del check-in di Sketch: Great / Sleepy / Stuck / Stressed.
+//  "How do you feel?" — i quattro stati della schermata Mood di Sketch.
+//  La frase sotto ogni umore dice SUBITO cosa succederà, così l'utente si fida:
+//
+//   😊 Ready     → "Full step, 25 min"     blocco intero
+//   😴 Tired     → "Shorter step, 10 min"  blocchi corti che crescono piano
+//   😣 Stressed  → "Start with a break"    prima una pausa per respirare, poi si studia
+//   🧱 Stuck     → "Easier step first"     un gesto minuscolo di 2 minuti ("apri il libro")
 //
 //  Regola del progetto: PIÙ SEI BLOCCATO, PIÙ IL PRIMO PASSO È PICCOLO.
-//  Tutta la "personalizzazione" dell'app nasce da questo enum:
-//
-//   😊 Great     → nessun riscaldamento, primo blocco da 15'
-//   😴 Sleepy    → nessun riscaldamento (serve energia, non un passo minuscolo),
-//                  ma blocchi corti più a lungo: la pausa arriva prima
-//   🧱 Stuck     → riscaldamento di 2' con un gesto fisico ("apri il libro")
-//   😣 Stressed  → riscaldamento di 3': "leggi solo le prime righe"
 //
 
 import SwiftUI
 
 enum Mood: String, CaseIterable, Identifiable {
-    case great
-    case sleepy
-    case stuck
+    case ready
+    case tired
     case stressed
+    case stuck
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .great:    return tr("Great", "Alla grande")
-        case .sleepy:   return tr("Sleepy", "Assonnato")
-        case .stuck:    return tr("Stuck", "Bloccato")
+        case .ready:    return tr("Ready", "Pronto")
+        case .tired:    return tr("Tired", "Stanco")
         case .stressed: return tr("Stressed", "Stressato")
+        case .stuck:    return tr("Stuck", "Bloccato")
         }
     }
 
-    /// La faccia del bradipo per questo umore
-    var pose: SlothPose {
+    /// La riga grigia sotto il titolo: cosa farà l'app
+    var subtitle: String {
         switch self {
-        case .great:    return .great
-        case .sleepy:   return .sleepy
-        case .stuck:    return .stuck
+        case .ready:    return tr("Full step, \(AppSettings.blockMinutes) min", "Passo intero, \(AppSettings.blockMinutes) min")
+        case .tired:    return tr("Shorter step, 10 min", "Passo più corto, 10 min")
+        case .stressed: return tr("Start with a break", "Si parte con una pausa")
+        case .stuck:    return tr("Easier step first", "Prima un passo facilissimo")
+        }
+    }
+
+    /// La faccia del Blob per questo umore
+    var pose: BlobPose {
+        switch self {
+        case .ready:    return .ready
+        case .tired:    return .tired
         case .stressed: return .stressed
+        case .stuck:    return .stuck
         }
     }
 
     /// Emoji compatta (lista delle sessioni recenti)
     var emoji: String {
         switch self {
-        case .great:    return "😊"
-        case .sleepy:   return "😴"
-        case .stuck:    return "🧱"
+        case .ready:    return "😊"
+        case .tired:    return "😴"
         case .stressed: return "😣"
+        case .stuck:    return "🧱"
         }
     }
 
     /// Livello numerico per confrontare prima/dopo (più basso = meglio)
     var level: Int {
         switch self {
-        case .great:    return 0
-        case .sleepy:   return 1
+        case .ready:    return 0
+        case .tired:    return 1
         case .stressed: return 2
         case .stuck:    return 2
         }
     }
 
-    /// Durata del riscaldamento (0 = nessun riscaldamento)
+    /// Durata del riscaldamento (solo "Stuck" ne ha uno)
     var firstTimerMinutes: Int {
-        switch self {
-        case .great, .sleepy: return 0
-        case .stressed:       return 3
-        case .stuck:          return 2
-        }
-    }
-
-    /// Il fumetto del bradipo dopo la scelta ("Got it: I'll make the first step extra small").
-    /// Tono: mai giudicante.
-    var encouragement: String {
-        switch self {
-        case .great:
-            return tr("Great! We start with a 15-minute block.",
-                      "Ottimo! Partiamo con un blocco da 15 minuti.")
-        case .sleepy:
-            return tr("Got it: a glass of water, then short blocks.",
-                      "Capito: un bicchiere d'acqua, poi blocchi corti.")
-        case .stuck:
-            return tr("Got it: I'll make the first step extra small.",
-                      "Capito: il primo passo sarà piccolissimo.")
-        case .stressed:
-            return tr("Breathe. We start with just \(firstTimerMinutes) minutes.",
-                      "Respira. Iniziamo con soli \(firstTimerMinutes) minuti.")
-        }
+        self == .stuck ? 2 : 0
     }
 }

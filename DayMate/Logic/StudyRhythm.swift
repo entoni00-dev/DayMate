@@ -12,10 +12,10 @@
 //  dimostrato dalla scienza. Ma è un buon punto di partenza, e si cambia nelle Impostazioni.)
 //  Il problema è che 25 minuti sono TROPPI se sei bloccato. Quindi parto corto e allungo:
 //
-//     Stuck:     2' riscaldamento → 5' → 10' → 15' → 25' → 25' ...
-//     Stressed:  3' riscaldamento → 10' → 15' → 20' → 25' ...
-//     Sleepy:                       10' → 10' → 15' → 20' → 25' ...
-//     Great:                        15' → 25' → 25' ...
+//     Stuck:     2' riscaldamento → 5' → 10' → 15' → 25' ...
+//     Stressed:  5' di pausa      → 10' → 15' → 20' → 25' ...
+//     Tired:                        10' → 15' → 20' → 25' ...
+//     Ready:                        25' → 25' ...
 //
 //  Ogni blocco finito "dimostra" che ce la fai, e il successivo è solo un po' più lungo.
 //
@@ -28,9 +28,9 @@ enum StudyRhythm {
     static func ramp(for mood: Mood) -> [Int] {
         switch mood {
         case .stuck:    return [5, 10, 15]
-        case .stressed: return [10, 15, 20]
-        case .sleepy:   return [10, 10, 15, 20]   // con il sonno la pausa arriva prima, più a lungo
-        case .great:    return [15]
+        case .stressed: return [10, 15, 20]       // (dopo la pausa iniziale)
+        case .tired:    return [10, 15, 20]       // "Shorter step, 10 min"
+        case .ready:    return []                 // "Full step": subito il blocco intero
         }
     }
 

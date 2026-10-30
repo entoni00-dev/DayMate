@@ -4,39 +4,43 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  Piccola card con un numero grande e un'etichetta (usata in Progress e nel riepilogo).
+//  Piccola card con un numero grande e un'etichetta (usata in Progressi e nel riepilogo).
 //
 
 import SwiftUI
 
 struct StatTile: View {
-    let emoji: String
+    /// Icona SF Symbol sopra il numero
+    let icon: String
     let value: String
     let label: String
-    var color: Color = Theme.ink
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(emoji)
-                .font(.title2)
+            Image(systemName: icon)
+                .font(.headline)
+                .foregroundStyle(Theme.accent)
             Text(value)
-                .font(.title.bold())
-                .foregroundStyle(color)
+                .font(.system(.title, weight: .bold))
+                .foregroundStyle(Theme.text)
                 .contentTransition(.numericText())
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Theme.mute)
+                .foregroundStyle(Theme.secondary)
                 .lineLimit(2)
         }
-        .dmCard(radius: 22, padding: 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .cardBackground(radius: 18)
     }
 }
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
     HStack {
-        StatTile(emoji: "⏱️", value: "42", label: "minutes of focus")
-        StatTile(emoji: "✅", value: "12", label: "steps done")
+        StatTile(icon: "timer", value: "42", label: "minutes of focus")
+        StatTile(icon: "checkmark.circle", value: "12", label: "steps done")
     }
     .padding()
+    .background(Theme.background)
 }

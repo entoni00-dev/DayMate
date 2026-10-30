@@ -30,37 +30,39 @@ struct ChoiceView: View {
         VStack(spacing: 16) {
             Spacer(minLength: 0)
 
-            SlothView(pose: .great)
-                .frame(height: 170)
+            GlowRings(size: 240) {
+                BlobView(pose: .cheer)
+            }
 
-            ScreenHeader(eyebrow: tr("Warm-up done", "Riscaldamento fatto"),
-                         title: tr("You did it: you started.", "Ce l'hai fatta: hai iniziato."),
-                         subtitle: tr("Done in \(elapsedText). The hardest part is behind you. Now you choose, no guilt.",
-                                      "Fatto in \(elapsedText). La parte più difficile è passata. Ora scegli tu, senza sensi di colpa."),
-                         alignment: .center)
+            Text(tr("You did it: you started.", "Ce l'hai fatta: hai iniziato."))
+                .font(.dmTitle)
+                .foregroundStyle(Theme.text)
+                .multilineTextAlignment(.center)
+
+            Text(tr("Done in \(elapsedText). The hardest part is behind you. Now you choose, no guilt.",
+                    "Fatto in \(elapsedText). La parte più difficile è passata. Ora scegli tu, senza sensi di colpa."))
+                .font(.callout)
+                .foregroundStyle(Theme.secondary)
+                .multilineTextAlignment(.center)
 
             Spacer(minLength: 0)
 
-            Button {
-                onContinue()
-            } label: {
-                Label(tr("Keep going: \(nextBlockMinutes) min block", "Continuo: blocco da \(nextBlockMinutes) min"),
-                      systemImage: "arrow.right")
-            }
-            .buttonStyle(PillButtonStyle(variant: .dark))
+            Button(tr("Keep going · \(nextBlockMinutes) min", "Continuo · \(nextBlockMinutes) min"), action: onContinue)
+                .buttonStyle(PrimaryButtonStyle())
 
             Button(tr("First a real break", "Prima una pausa vera"), action: onBreak)
-                .buttonStyle(PillButtonStyle(variant: .honey))
+                .buttonStyle(QuietButtonStyle(color: Theme.lightMain))
 
             Button(tr("I'll stop here for today", "Mi fermo qui per oggi"), action: onStop)
-                .buttonStyle(TextLinkStyle())
+                .buttonStyle(QuietButtonStyle())
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 20)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 12)
     }
 }
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
     ChoiceView(elapsedSeconds: 130, nextBlockMinutes: 5, onContinue: {}, onBreak: {}, onStop: {})
+        .background(Theme.background)
 }

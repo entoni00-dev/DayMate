@@ -35,8 +35,8 @@ enum AppMode: String, CaseIterable, Identifiable {
     /// Il titolo della card di scelta
     var choiceTitle: String {
         switch self {
-        case .study:   return tr("Organise your study", "Organizza lo studio")
-        case .planner: return tr("Make a planner", "Fai un planner")
+        case .study:   return tr("Study", "Studia")
+        case .planner: return tr("Plan my day", "Organizza la giornata")
         }
     }
 
@@ -51,23 +51,17 @@ enum AppMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var color: Color {
+    /// La riga piccola sotto il titolo, nella schermata iniziale
+    var startSubtitle: String {
         switch self {
-        case .study:   return Theme.honey
-        case .planner: return Theme.lilac
-        }
-    }
-
-    var pose: SlothPose {
-        switch self {
-        case .study:   return .reading
-        case .planner: return .calendar
+        case .study:   return tr("start a tiny step", "inizia un piccolo passo")
+        case .planner: return tr("tasks, water and deadlines", "attività, acqua e scadenze")
         }
     }
 
     var icon: String {
         switch self {
-        case .study:   return "books.vertical.fill"
+        case .study:   return "book"
         case .planner: return "calendar"
         }
     }

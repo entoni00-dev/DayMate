@@ -4,25 +4,28 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  Colori e caratteri presi dalle schermate di Sketch, in un posto solo.
+//  🎨 La palette "Ube night" (dal file Sketch, pagina "Colors").
+//  L'ube è un tubero viola delle Filippine: da lì il nome e il colore principale.
 //
-//  🎨 La palette DayMate:
-//   - honey  (giallo miele)  → studio, card principali, bottoni secondari
-//   - cocoa  (marrone scuro) → bottoni principali ("Start", "Save", "Next")
-//   - rust   (ruggine)       → piccole etichette sopra i titoli ("Math - step 3 of 6")
-//   - lilac  (lilla)         → tutto ciò che è "Plan"
-//   - sky    (azzurrino)     → acqua
-//   - cream / paper          → sfondi caldi, mai bianco "da ufficio"
+//   background  #1A1530  → lo sfondo di tutte le schermate (blu-viola molto scuro)
+//   card        #262044  → le card e le liste
+//   highlight   #332A5C  → card in evidenza, icone, campi
+//   main        #9F7BFF  → il viola dei bottoni principali
+//   lightMain   #CDB9FF  → link e icone ("‹ Today", "Cancel")
+//   accent      #7EF0C8  → il verde menta: progressi, spunte, "NEXT TINY STEP"
+//   text        #F1EDFF  → testo principale (bianco un po' lilla)
+//   secondary   #9890BF  → testo secondario (date, sottotitoli)
 //
-//  L'app è solo in modalità chiara (Info.plist → UIUserInterfaceStyle = Light):
-//  la palette di Sketch è pensata per sfondi chiari.
+//  📌 Nota per me: l'app è solo scura (Info.plist → UIUserInterfaceStyle = Dark),
+//  perché tutto il design è pensato su questo sfondo notturno.
 //
 
 import SwiftUI
 
 extension Color {
-    /// Color(hex: 0xFEB727)
+    /// Permette di scrivere i colori come in Sketch: Color(hex: 0x9F7BFF)
     init(hex: UInt32, opacity: Double = 1) {
+        // ">> 16" sposta i bit per prendere solo il rosso, "& 0xFF" tiene gli ultimi 8 bit
         self.init(.sRGB,
                   red: Double((hex >> 16) & 0xFF) / 255,
                   green: Double((hex >> 8) & 0xFF) / 255,
@@ -33,45 +36,37 @@ extension Color {
 
 enum Theme {
 
-    // MARK: - Palette (campionata dagli screenshot di Sketch)
+    // MARK: - Palette Ube night
 
-    static let honey     = Color(hex: 0xFEB727)
-    static let honeySoft = Color(hex: 0xFFE9B8)
-    static let cocoa     = Color(hex: 0x4F4840)
-    static let ink       = Color(hex: 0x4C453D)
-    static let rust      = Color(hex: 0x9A4D2F)
-    static let cream     = Color(hex: 0xFEFBF2)
-    static let paper     = Color(hex: 0xF8F8F8)
-    static let stone     = Color(hex: 0xE9E5DA)
-    static let sand      = Color(hex: 0xEFE7DA)
-    static let mute      = Color(hex: 0x8B8177)
-    static let lilac     = Color(hex: 0xD9AAD6)
-    static let lilacSoft = Color(hex: 0xEED9EC)
-    static let skySoft   = Color(hex: 0xDDE8EE)
-    static let water     = Color(hex: 0x8DC1D7)
-    static let leaf      = Color(hex: 0x7A886E)
-    static let blush     = Color(hex: 0xF1B39C)
-    static let pillGray  = Color(hex: 0xF1F1EE)
+    static let background = Color(hex: 0x1A1530)
+    static let card       = Color(hex: 0x262044)
+    static let highlight  = Color(hex: 0x332A5C)
+    static let main       = Color(hex: 0x9F7BFF)
+    static let lightMain  = Color(hex: 0xCDB9FF)
+    static let accent     = Color(hex: 0x7EF0C8)
+    static let text       = Color(hex: 0xF1EDFF)
+    static let secondary  = Color(hex: 0x9890BF)
 
-    /// Colore "di accento" di un esame. In Sketch gli esami sono tutti color miele.
-    static let exam = honey
-
-    /// Emoji degli esami (usate nelle statistiche)
-    static let emojis = ["📘", "🧮", "💻", "⚙️", "🧪", "🧠", "📐", "🌍", "⚖️", "🎨", "🩺", "📊"]
+    /// Arancione tenue solo per gli avvisi (es. "il piano è stretto")
+    static let warning    = Color(hex: 0xFFB86B)
 }
 
 // MARK: - Caratteri
 //
-// Uso gli stili di testo di sistema (.title, .body…) così il testo si ingrandisce
-// con le impostazioni di accessibilità (Dynamic Type).
+// In Sketch il font è Helvetica Neue; su iPhone uso il font di sistema (San Francisco),
+// che è quasi uguale e si ingrandisce da solo con le impostazioni di accessibilità.
 
 extension Font {
-    static let dmHuge       = Font.system(.largeTitle, weight: .bold)
+    /// "Today", "Plan" (34 bold)
+    static let dmLargeTitle = Font.system(.largeTitle, weight: .bold)
+    /// "New exam", "How do you feel?" (30 bold)
     static let dmTitle      = Font.system(.title, weight: .bold)
-    static let dmTitle2     = Font.system(.title2, weight: .bold)
-    static let dmEyebrow    = Font.system(.title3, weight: .medium)
-    static let dmHeadline   = Font.system(.headline, weight: .semibold)
-    static let dmButton     = Font.system(.body, weight: .medium)
-    static let dmSerif      = Font.system(.subheadline, design: .serif, weight: .semibold)
-    static let dmSerifBig   = Font.system(.headline, design: .serif, weight: .bold)
+    /// "Read Ch. 2" nella card (26 bold)
+    static let dmCardTitle  = Font.system(.title2, weight: .bold)
+    /// titoli delle righe ("Math", "Ready")
+    static let dmRowTitle   = Font.system(.body, weight: .semibold)
+    /// "YOUR EXAMS", "TINY STEPS"
+    static let dmSection    = Font.system(.footnote, weight: .bold)
+    /// testo dei bottoni
+    static let dmButton     = Font.system(.body, weight: .bold)
 }

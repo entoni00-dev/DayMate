@@ -14,7 +14,7 @@ extension Exam {
     // MARK: - Aspetto e tipo
 
     /// In Sketch tutti gli esami sono color miele (colorIndex resta nel modello per compatibilità)
-    var color: Color { Theme.exam }
+    var color: Color { Theme.main }
 
     var kind: ExamKind { ExamKind(rawValue: kindRaw) ?? .mixed }
 

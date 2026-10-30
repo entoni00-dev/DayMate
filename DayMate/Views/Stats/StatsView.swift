@@ -72,7 +72,7 @@ struct StatsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if !embedded {
-                    BackPill(title: "Home")
+                    TopLink(title: "Home", showsChevron: true)
                     ScreenHeader(eyebrow: tr("Slowly but surely", "Piano ma sicuro"),
                                  title: tr("Your progress", "I tuoi progressi"))
                 }
@@ -81,10 +81,10 @@ struct StatsView: View {
 
                 // LazyVGrid = una griglia (qui 2 colonne)
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], spacing: 12) {
-                    StatTile(emoji: "⏱️", value: "\(totalFocusMinutes)", label: tr("minutes of study", "minuti di studio"))
-                    StatTile(emoji: "✅", value: "\(completedSteps)", label: tr("tiny steps done", "piccoli passi fatti"))
-                    StatTile(emoji: "🚶", value: "\(realBreaks)", label: tr("breaks without phone", "pause senza telefono"))
-                    StatTile(emoji: "📅", value: "\(activeDays)", label: tr("days you started", "giorni in cui hai iniziato"))
+                    StatTile(icon: "timer", value: "\(totalFocusMinutes)", label: tr("minutes of study", "minuti di studio"))
+                    StatTile(icon: "checkmark.circle", value: "\(completedSteps)", label: tr("tiny steps done", "piccoli passi fatti"))
+                    StatTile(icon: "figure.walk", value: "\(realBreaks)", label: tr("breaks without phone", "pause senza telefono"))
+                    StatTile(icon: "calendar", value: "\(activeDays)", label: tr("days you started", "giorni in cui hai iniziato"))
                 }
 
                 weekChart
@@ -110,40 +110,39 @@ struct StatsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(tr("You started", "Hai iniziato"))
                     .font(.headline)
-                    .foregroundStyle(Theme.ink.opacity(0.85))
+                    .foregroundStyle(Theme.text.opacity(0.85))
                 Text(sessions.count == 1 ? tr("1 time", "1 volta") : tr("\(sessions.count) times", "\(sessions.count) volte"))
                     .font(.system(size: 44, weight: .heavy))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.accent)
                     .contentTransition(.numericText())
                 Text(sessions.isEmpty
                      ? tr("The first time is the hardest. 2 minutes are enough.", "La prima volta è la più difficile. Bastano 2 minuti.")
                      : tr("Starting is the hard part, and you did it.", "Iniziare è la parte difficile, e tu l'hai fatto."))
                     .font(.subheadline)
-                    .foregroundStyle(Theme.ink.opacity(0.85))
+                    .foregroundStyle(Theme.text.opacity(0.85))
                     .padding(.trailing, 90)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            SlothView(pose: .great)
+            BlobView(pose: .cheer)
                 .frame(width: 80, height: 80)
         }
         .padding(20)
-        .background(Theme.honey, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Theme.honey.opacity(0.35), radius: 10, y: 5)
+        .cardBackground(highlighted: true, radius: 22)
     }
 
     private var weekChart: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(tr("Last 7 days", "Ultimi 7 giorni"))
-                .font(.dmHeadline)
-                .foregroundStyle(Theme.ink)
+                .font(.dmRowTitle)
+                .foregroundStyle(Theme.text)
 
             Chart(weekData) { item in
                 BarMark(
                     x: .value("Day", item.day, unit: .day),
                     y: .value("Minutes", item.minutes)
                 )
-                .foregroundStyle(Theme.honey)
+                .foregroundStyle(Theme.main)
                 .cornerRadius(6)
             }
             .chartXAxis {
@@ -164,39 +163,39 @@ struct StatsView: View {
             Text("💚").font(.largeTitle)
             VStack(alignment: .leading, spacing: 4) {
                 Text(tr("Starting is good for you", "Iniziare ti fa bene"))
-                    .font(.dmHeadline)
-                    .foregroundStyle(Theme.ink)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(Theme.text)
                 Text(tr("In \(percent)% of sessions (\(stats.improved) of \(stats.total)) you felt better at the end than when you started.",
                         "Nel \(percent)% delle sessioni (\(stats.improved) su \(stats.total)) alla fine ti sentivi meglio di quando hai iniziato."))
                     .font(.subheadline)
-                    .foregroundStyle(Theme.mute)
+                    .foregroundStyle(Theme.secondary)
             }
             Spacer(minLength: 0)
         }
-        .dmCard(Theme.cream)
+        .dmCard(Theme.highlight)
     }
 
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(tr("Recent sessions", "Sessioni recenti"))
-                .font(.dmHeadline)
-                .foregroundStyle(Theme.ink)
+                .font(.dmRowTitle)
+                .foregroundStyle(Theme.text)
 
             ForEach(sessions.prefix(5)) { session in
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(session.exam?.name ?? tr("Deleted exam", "Esame eliminato"))
                             .font(.subheadline.bold())
-                            .foregroundStyle(Theme.ink)
+                            .foregroundStyle(Theme.text)
                         Text(session.startedAt.formatted(.relative(presentation: .named).locale(L10n.locale)))
                             .font(.caption)
-                            .foregroundStyle(Theme.mute)
+                            .foregroundStyle(Theme.secondary)
                     }
                     Spacer()
                     Text("\(session.moodBefore.emoji) → \(session.moodAfter?.emoji ?? "–")")
                     Text("\(session.focusedSeconds / 60)′")
                         .font(.subheadline.bold())
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.lightMain)
                         .frame(minWidth: 34, alignment: .trailing)
                 }
             }

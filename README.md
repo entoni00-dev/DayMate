@@ -28,8 +28,8 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
 
 ## 🆕 Cosa cambia in DayMate (v2 → DayMate)
 
-1. **Nuova grafica dalle schermate Sketch**: palette miele / marrone / ruggine / lilla, bottoni a capsula, barra in alto, cerchi decorativi.
-2. **Il bradipo**: mascotte in 14 pose (vedi sotto come sostituirlo con le illustrazioni originali).
+1. **Grafica "Ube night"** (file Sketch *DayMate-Ube-night*): tema scuro viola, verde menta per i progressi, liste in stile iOS, anelli concentrici.
+2. **Il Blob**: la mascotte in 8 pose, esportate direttamente dal file Sketch.
 3. **Due modi di usare l'app, scelti una volta all'inizio** (come entrare "da utente" o "da titolare"): dopo la presentazione, "Come vuoi usare DayMate?"
    - 📚 **Studio** → barra in alto: Esami · Dubbi · Coach · Progressi (+ Esame / + Dubbio)
    - 🗓️ **Planner** → barra in alto: Giorno · Settimana · Scadenze (+ Attività / + Scadenza)
@@ -37,49 +37,47 @@ Requisiti: **iOS 17+**. Il Tutor AI si attiva da solo su iOS 26 con Apple Intell
    - Collegamenti: se usi Studio, i passi di oggi e le date d'esame compaiono anche nel Planner.
    - **Dubbi**: si aggiungono quando vuoi (Dubbi → + Dubbio, o dal menu ••• di un esame), non solo durante un blocco.
 4. **4 umori invece di 3**: Great, Sleepy, Stuck, Stressed (vedi tabella sotto).
-5. **Planner** (nuovo): cose da fare del giorno + i passi di studio già presi dal piano, e l'acqua (8 bicchieri, modificabile nelle Impostazioni).
-6. **New Exam ridisegnato**: gli argomenti sono "chip" (tocca per pagine e difficoltà), la pista 🐢 → 🐇 sceglie il ritmo giornaliero e la card dice subito se il piano ci sta.
+5. **Planner**: settimana, STUDY (passi d'esame del giorno + attività di studio), DUTIES & FREE TIME con orario, acqua. "Add to your day" con tipo (Studio / Impegno / Tempo libero), ora, durata e "È una scadenza".
+6. **New exam come in Sketch**: materia, data e i piccoli passi scritti a mano (si riordinano trascinando ≡). Con "✨ Crea i passi per me" l'app genera un piano realistico da argomenti e pagine.
 7. **Cose nuove di iOS 17**: suggerimenti con **TipKit** (Esami, Dubbi, Planner), **SF Symbols animati** (`.symbolEffect`), SwiftData, `@Observable`; e il **Tutor AI on-device** con Foundation Models (iOS 26).
 8. **Codice scritto per essere capito**: commenti in prima persona in ogni file (📌 Nota per me, 🐛 Problema che ho incontrato), niente trucchi avanzati dove non servono.
 9. **Italiano (predefinito) + inglese a scelta dell'utente**, con `tr("English", "Italiano")` (file `Design/L10n.swift`). Cambiando lingua l'app si ridisegna subito e resti nella schermata in cui eri.
-8. Coach, Progress e Impostazioni restano tutti, ridisegnati.
+10. Coach, Progress e Impostazioni restano tutti, ridisegnati.
 
-## 🦥 Usare le illustrazioni originali di Sketch
+## 🫘 Il Blob (la mascotte)
 
-Il bradipo è in `Assets.xcassets` → cartella **Sloth**, un PNG per ogni posa (versioni provvisorie ridisegnate dalle schermate). Per usare i disegni originali di Sketch:
-
-1. In Sketch esporta ogni bradipo come **PNG @3x** (o PDF) con sfondo trasparente.
-2. Trascinali in `Assets.xcassets/Sloth` sopra quelli esistenti, con **questi nomi esatti**:
+Le 8 pose sono PNG in `Assets.xcassets/Mascot`, esportate dalla pagina *Mascot* del file Sketch:
 
 | Nome asset | Dove compare |
 |---|---|
-| `sloth_hanging` | First Page (appeso al ramo) |
-| `sloth_reading` | card Study, timer in corso |
-| `sloth_calendar` | card Plan |
-| `sloth_pointing` | card dell'esame |
-| `sloth_thinking` | New Exam, esami vuoti |
-| `sloth_book` | timer pronto (tiene il libro) |
-| `sloth_hat` | pausa |
-| `sloth_waving` | Welcome back! |
-| `sloth_drinking` | card dell'acqua |
-| `sloth_head` | avatar ("Slooow", fumetti) |
-| `sloth_great`, `sloth_sleepy`, `sloth_stuck`, `sloth_stressed` | tessere del Mood |
+| `blob_hello` | schermata iniziale, "Welcome back!" |
+| `blob_reading` | card "Next tiny step" |
+| `blob_cheer` | "Nice work!" a fine blocco, riepilogo |
+| `blob_ready`, `blob_tired`, `blob_stressed`, `blob_stuck` | le 4 righe di "How do you feel?" |
+| `blob_break` | pausa |
 
-Non serve toccare il codice: `SlothView` mostra semplicemente `Image("sloth_…")`.
+Per aggiornarle basta riesportarle da Sketch con lo stesso nome: `BlobView` mostra semplicemente `Image("blob_…")`.
 
 ## 🔁 Il ciclo dell'app
 
 ```
-Mood ─► [riscaldamento 2-3' → scelta] ─► TIMER (blocchi a rampa) ─► ⏸️ Time for a break!
-        (solo Stuck / Stressed)             ▲                                  │
-                                            │                                  ▼
-                                 ▶️ Welcome back! ◄──────────── Take a real break (5', lunga ogni 4)
+Today ─► "Start" ─► How do you feel? ─┬─ Ready / Tired ──────────────► TIMER ─► Break time ("Nice work!")
+                                      ├─ Stuck ─► passo facilissimo 2' ─┘   ▲              │
+                                      └─ Stressed ─► Break time subito      └─ Welcome back ◄┘
 
-In ogni momento: "Stop for today" ─► umore di fine ─► riepilogo
+In ogni momento: "Basta" ─► umore di fine ─► riepilogo
 ```
 
-| Umore | Riscaldamento | Blocchi di studio |
+| Umore | Cosa dice l'app | Cosa succede |
 |---|---|---|
+| 😊 Ready | Full step, 25 min | blocco intero subito |
+| 😴 Tired | Shorter step, 10 min | 10' → 15' → 20' → 25' |
+| 😣 Stressed | Start with a break | prima 5' di pausa, poi 10' → 15' → 20' |
+| 🧱 Stuck | Easier step first | 2' di gesto minuscolo ("apri il libro"), poi 5' → 10' → 15' |
+
+Nel timer: ⏸ mette in pausa, ✓ segna il passo fatto e passa al prossimo senza fermare il tempo.
+
+---|---|---|
 | 😊 Great | nessuno | 15' → 25' → 25'… |
 | 😴 Sleepy | nessuno (prima un bicchiere d'acqua) | 10' → 10' → 15' → 20' → 25'… |
 | 😣 Stressed | "leggi solo le prime righe" · 3 min | 10' → 15' → 20' → 25'… |
@@ -96,18 +94,18 @@ DayMate/
 │   ├── Theme.swift                  → colori e caratteri
 │   ├── Components.swift             → bottoni a capsula, ‹ BackPill, card, fumetto…
 │   ├── L10n.swift                   → lingua scelta dall'utente (IT di default): tr("…", "…")
-│   ├── SlothView.swift              → il bradipo (immagini in Assets/Sloth)
-│   ├── WeekStrip, TortoiseTrack, SlothRing → settimana, pista 🐢→🐇, anello del timer
+│   ├── BlobView.swift               → la mascotte (immagini in Assets/Mascot)
+│   ├── WeekStrip.swift              → la settimana a quadratini
 │   ├── TopTabBar.swift              → la barra in alto delle modalità Studio / Planner
 ├── Models/                          → cosa viene SALVATO (Exam, StudyStep, StudySession, Doubt,
 │                                      PlannerTask, WaterLog) + Mood, StudyKinds, BreakActivity
 ├── Logic/                           → piano di studio, ritmo, coach, tutor AI, notifiche, suoni
 ├── Resources/                       → suoni + nome dell'app per lingua
 └── Views/
-    ├── Onboarding/                  → "Slooow", presentazione e scelta della modalità
-    ├── Study/StudyModeView          → modalità Studio con la barra in alto
+    ├── Onboarding/                  → schermata iniziale: Study oppure Plan my day
     ├── Planner/                     → modalità Planner: Giorno, Settimana, Scadenze
     ├── Exams/                       → esami, nuovo esame, dettaglio
+    ├── Study/                       → modalità Studio + "Today"
     ├── Session/                     → Mood → Timer → Break → Welcome back (MVVM)
     ├── Coach/ Stats/ Settings/
     └── Components/                  → programma della giornata, StatTile…
@@ -117,7 +115,7 @@ DayMate/
 - La sessione segue il pattern **MVVM**: `StudySessionModel` (@Observable) contiene stato e decisioni, le viste mostrano e comunicano le scelte con closure.
 - Il **piano non viene salvato ma ricalcolato** ogni volta dai passi rimasti: così si adatta da solo e non genera "ritardi" che fanno sentire in colpa. Anche il Planner lo legge da lì.
 - Il **Tutor AI** è isolato dietro `#if canImport(FoundationModels)` + `@available(iOS 26, *)`: l'app compila e gira anche su iOS 17.
-- **Solo modalità chiara**: la palette di Sketch è pensata per sfondi chiari.
+- **Solo modalità scura**: la palette Ube night è pensata per lo sfondo notturno.
 
 ## 💡 Idee aggiunte rispetto al prompt iniziale
 
@@ -128,7 +126,7 @@ DayMate/
 5. **Timer basato sulla data di fine** → resta preciso anche se iOS sospende l'app.
 6. **Bottone onesto "In realtà ho preso il telefono 🙈"** → nessun rimprovero, ma le statistiche restano sincere.
 7. **"Giorni in cui hai iniziato" invece della streak** → le streak quando si rompono generano senso di colpa.
-8. **"Next tiny step" sulla card dell'esame** → apri l'app (modalità Studio) e con un tocco si parte. "Slooow" e la scelta della modalità compaiono solo al primo avvio, per non aggiungere tocchi ogni volta.
+8. **"Next tiny step" in Today** → apri l'app (modalità Studio) e con un tocco si parte. La scelta della modalità compare solo al primo avvio, per non aggiungere tocchi ogni volta.
 9. **Incolla l'indice del programma** → nel foglio "New topic", separando i nomi con virgole crei tanti argomenti in una volta.
 
 ---

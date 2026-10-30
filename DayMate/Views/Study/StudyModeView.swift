@@ -4,13 +4,15 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  📚 La modalità "Organizza lo studio": tutto ciò che serve per preparare gli esami,
-//  raccolto sotto una barra in alto. È la "home" di chi sceglie Studio all'inizio.
+//  📚 La modalità Studio: la "home" di chi sceglie "Study" nella schermata iniziale.
 //
-//   [ Esami ] [ Dubbi ] [ Coach ] [ Progressi ]        + (aggiungi, se ha senso)
+//   [Studio]                     ⚙️ (+)
+//   Today
+//   Thursday 29 October
+//   ( Oggi ) Dubbi  Coach  Progressi
 //
-//   - Esami     → i tuoi esami, il piano e "Prossimo piccolo passo" (la sessione)
-//   - Dubbi     → le domande parcheggiate, con "+ Dubbio" per aggiungerne quando vuoi
+//   - Oggi      → prossimo passo, i tuoi esami, il piano di oggi (schermata Today di Sketch)
+//   - Dubbi     → le domande parcheggiate
 //   - Coach     → consigli dai tuoi dati, Tutor AI, cosa funziona davvero
 //   - Progressi → quante volte hai iniziato, minuti, umore prima/dopo
 //
@@ -20,11 +22,11 @@ import SwiftData
 
 /// Le 4 sezioni della modalità Studio
 enum StudyTab: String, CaseIterable {
-    case exams, doubts, coach, progress
+    case today, doubts, coach, progress
 
     var title: String {
         switch self {
-        case .exams:    return tr("Exams", "Esami")
+        case .today:    return tr("Today", "Oggi")
         case .doubts:   return tr("Doubts", "Dubbi")
         case .coach:    return "Coach"
         case .progress: return tr("Progress", "Progressi")
@@ -33,8 +35,8 @@ enum StudyTab: String, CaseIterable {
 
     var icon: String {
         switch self {
-        case .exams:    return "books.vertical.fill"
-        case .doubts:   return "bubble.left.and.exclamationmark.bubble.right.fill"
+        case .today:    return "sun.max.fill"
+        case .doubts:   return "questionmark.bubble.fill"
         case .coach:    return "sparkles"
         case .progress: return "chart.bar.fill"
         }
@@ -47,21 +49,26 @@ enum StudyTab: String, CaseIterable {
 }
 
 struct StudyModeView: View {
-    /// Il percorso di navigazione (tenuto in RootView)
+    // @Binding = il percorso di navigazione appartiene a RootView
     @Binding var path: NavigationPath
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var tab: StudyTab = .exams
+    @State private var tab: StudyTab = .today
     @State private var showingAddExam = false
     @State private var showingAddDoubt = false
 
-    /// Il bottone "+" cambia in base alla sezione
+    /// Il "+" cambia significato in base alla sezione
     private var addLabel: String? {
         switch tab {
-        case .exams:  return tr("Exam", "Esame")
-        case .doubts, .coach: return tr("Doubt", "Dubbio")
-        case .progress: return nil
+        case .today:          return tr("New exam", "Nuovo esame")
+        case .doubts, .coach: return tr("New doubt", "Nuovo dubbio")
+        case .progress:       return nil
         }
+    }
+
+    /// Sotto "Today" metto la data, come in Sketch ("Thursday 29 October")
+    private var subtitle: String? {
+        tab == .today ? Date.now.longDayText : nil
     }
 
     var body: some View {
@@ -86,21 +93,22 @@ struct StudyModeView: View {
         VStack(spacing: 0) {
             SpaceHeader(mode: .study,
                         title: tab.title,
+                        subtitle: subtitle,
                         items: StudyTab.allCases.map { $0.item },
                         selectedID: tab.rawValue,
                         onSelect: { id in
-                            // dall'id ("exams", "doubts"…) ritrovo la sezione
+                            // dall'id ("today", "doubts"…) ritrovo la sezione
                             if let newTab = StudyTab(rawValue: id) {
-                                // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
                                 withAnimation(.snappy) { tab = newTab }
                             }
                         },
                         addLabel: addLabel,
                         onAdd: add)
 
+            // Il contenuto della sezione scelta
             Group {
                 switch tab {
-                case .exams:    ExamsView(embedded: true)
+                case .today:    TodayView(onAddExam: { showingAddExam = true })
                 case .doubts:   DoubtsView(embedded: true)
                 case .coach:    CoachView(embedded: true, onOpenDoubts: { tab = .doubts })
                 case .progress: StatsView(embedded: true)
@@ -118,7 +126,7 @@ struct StudyModeView: View {
 
     private func add() {
         switch tab {
-        case .exams:          showingAddExam = true
+        case .today:          showingAddExam = true
         case .doubts, .coach: showingAddDoubt = true
         case .progress:       break
         }

@@ -4,428 +4,275 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  "New Exam" di Sketch.
+//  "New exam" (schermata 03 di Sketch):
 //
-//  Sketch mostra: nome, data, "Materials" (le chip Ch 01, Ch 02…) e la card gialla
-//  con i "tiny steps" e la pista tartaruga → lepre.
-//  Sotto il cofano resta il piano REALISTICO della v2:
-//   - ogni chip è un argomento con pagine e difficoltà (tocca la chip per cambiarle)
-//   - la pista tartaruga → lepre sceglie il RITMO: quanto tempo al giorno puoi dedicare
-//     (🐢 30 min … 🐇 5 h). La card dice subito se il piano ci sta.
-//   - il tipo d'esame (teoria / esercizi / misto) decide se ci sono esercizi e simulazioni
+//   Cancel                            Save
+//   New exam
+//   SUBJECT      [ Math              ]
+//   EXAM DATE    [ 12 November 2026 📅]
+//   TINY STEPS   ○ Read notes Ch. 1   ≡
+//                ○ Exercises 1–5      ≡
+//                + Add a tiny step
+//   (Blob) Keep steps small: 10–25 minutes each works best
+//
+//  I passi li scrivo io, uno per riga, e li riordino trascinando ≡.
+//  Se non so da dove partire c'è "✨ Create the steps for me": dico argomenti, pagine e
+//  difficoltà e l'app crea un piano realistico (vedi StepGenerator.swift).
+//
+//  📌 Nota per me: qui uso un Form (la lista "a gruppi" di iOS) perché mi dà gratis
+//  il trascinamento per riordinare (.onMove) e lo swipe per eliminare (.onDelete).
 //
 
 import SwiftUI
 import SwiftData
 
+/// Un passo mentre lo sto scrivendo (non ancora salvato nel database)
+struct TinyStepDraft: Identifiable {
+    var id = UUID()
+    var title: String
+    var minutes: Int = 15
+    var kind: StepKind = .custom
+    var topic: String = ""
+}
+
 struct AddExamView: View {
-    // dismiss() chiude questa schermata (o il foglio) e torna indietro
+    // dismiss() chiude questa schermata e torna indietro
     @Environment(\.dismiss) private var dismiss
     // modelContext = il "quaderno" di SwiftData: lo uso per inserire ed eliminare dati
     @Environment(\.modelContext) private var context
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var name = ""
-    @State private var date = Calendar.current.date(byAdding: .day, value: 21, to: .now) ?? .now
-    @State private var kind: ExamKind = .mixed
-    @State private var paceIndex = 3          // indice in dailyOptions → 120 min
-    @State private var topics: [TopicDraft] = []
-
-    @State private var showingDatePicker = false
-    /// Argomento che sto modificando nel foglio (nil = foglio chiuso)
-    @State private var editingTopic: TopicDraft?
-
+    @State private var subject = ""
+    @State private var date = Calendar.current.date(byAdding: .day, value: 14, to: .now) ?? .now
+    @State private var steps: [TinyStepDraft] = []
+    @State private var newStep = ""
+    @State private var showingGenerator = false
     // @FocusState dice quale campo di testo ha la tastiera (così posso aprirla da codice)
-    @FocusState private var nameFocused: Bool
+    @FocusState private var newStepFocused: Bool
 
-    /// Ritmi possibili: dalla tartaruga alla lepre
-    private let dailyOptions = [30, 60, 90, 120, 180, 240, 300]
-
-    private var dailyMinutes: Int { dailyOptions[min(max(paceIndex, 0), dailyOptions.count - 1)] }
-
-    private var trimmedName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var trimmedSubject: String {
+        subject.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Posso salvare solo con un nome e almeno un passo
     private var canSave: Bool {
-        !trimmedName.isEmpty && !topics.isEmpty
-    }
-
-    /// Giorni di studio disponibili (fino al giorno prima dell'esame)
-    private var studyDays: Int {
-        let calendar = Calendar.current
-        let days = calendar.dateComponents([.day],
-                                           from: calendar.startOfDay(for: .now),
-                                           to: calendar.startOfDay(for: date)).day ?? 0
-        return max(days, 1)
-    }
-
-    private var daysLeft: Int {
-        let calendar = Calendar.current
-        return calendar.dateComponents([.day], from: calendar.startOfDay(for: .now),
-                                       to: calendar.startOfDay(for: date)).day ?? 0
+        !trimmedSubject.isEmpty && !steps.isEmpty
     }
 
     var body: some View {
-        // ScrollView: se il contenuto è più alto dello schermo, si scorre
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                BackPill(title: tr("Exams", "Esami"))
-
-                ScreenHeader(eyebrow: tr("Study", "Studio"), title: tr("New Exam", "Nuovo esame"))
-
-                nameField
-                dateRow
-                kindPicker
-                materials
-                planCard
-
-                Button(tr("Save", "Salva"), action: save)
-                    .buttonStyle(PillButtonStyle(variant: .dark))
+        VStack(alignment: .leading, spacing: 0) {
+            // Riga in alto: Cancel a sinistra, Save a destra
+            HStack {
+                TopLink(title: tr("Cancel", "Annulla"))
+                Spacer()
+                TopLink(title: tr("Save", "Salva"), bold: true,
+                        color: canSave ? Theme.main : Theme.secondary.opacity(0.5),
+                        action: save)
                     .disabled(!canSave)
-                    .padding(.top, 4)
-
-                if !canSave {
-                    Text(tr("Add a name and at least one topic to create your plan.",
-                            "Aggiungi un nome e almeno un argomento per creare il piano."))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.mute)
-                        .frame(maxWidth: .infinity)
-                }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 30)
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .dmScreen()
-        // .sheet = un foglio che sale dal basso sopra la schermata
-        .sheet(item: $editingTopic) { topic in
-            TopicEditorSheet(topic: topic,
-                             isNew: !topics.contains { $0.id == topic.id },
-                             onSave: saveTopics,
-                             onDelete: { id in topics.removeAll { $0.id == id } })
-        }
-    }
-
-    // MARK: - Campi
-
-    private var nameField: some View {
-        TextField(tr("Exam name", "Nome dell'esame"), text: $name)
-            .font(.dmTitle2)
-            .foregroundStyle(Theme.ink)
-            .textInputAutocapitalization(.words)
-            .focused($nameFocused)
-            .submitLabel(.done)
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(Theme.cream, in: Capsule())
-            .overlay(Capsule().strokeBorder(.black.opacity(0.04)))
-    }
+            .padding(.top, 8)
 
-    private var dateRow: some View {
-        VStack(spacing: 0) {
-            Button {
-                nameFocused = false
-                // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
-                withAnimation(.snappy) { showingDatePicker.toggle() }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "calendar")
-                        .font(.title2)
-                        .foregroundStyle(Theme.rust)
-                    Text(date.shortDayText)
-                        .font(.system(.title3, weight: .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Spacer()
-                    CountPill(text: daysLeft <= 0 ? tr("today", "oggi") : tr("in \(daysLeft) days", "tra \(daysLeft) giorni"))
+            ScreenTitle(title: tr("New exam", "Nuovo esame"), large: false)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+            Form {
+                Section(tr("Subject", "Materia")) {
+                    TextField(tr("e.g. Math", "es. Matematica"), text: $subject)
+                        .textInputAutocapitalization(.words)
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+                .listRowBackground(Theme.card)
 
-            if showingDatePicker {
-                DatePicker(tr("Exam date", "Data dell'esame"), selection: $date,
-                           in: Calendar.current.startOfDay(for: .now)...,
-                           displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .tint(Theme.rust)
-                    .padding(.horizontal, 8)
-                    .transition(.opacity)
-            }
-        }
-        .background(Theme.cream, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-    }
-
-    private var kindPicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(tr("Type", "Tipo"))
-                .font(.dmHeadline)
-                .foregroundStyle(Theme.ink)
-            HStack(spacing: 8) {
-                ForEach(ExamKind.allCases) { option in
-                    Button {
-                        Haptics.tap()
-                        withAnimation(.snappy) { kind = option }
-                    } label: {
-                        Text(option.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(kind == option ? .white : Theme.ink)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(kind == option ? Theme.cocoa : Theme.cream, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
+                Section(tr("Exam date", "Data dell'esame")) {
+                    DatePicker(tr("Date", "Data"), selection: $date,
+                               in: Calendar.current.startOfDay(for: .now)...,
+                               displayedComponents: .date)
                 }
-            }
-            Text(kind.detail)
-                .font(.caption)
-                .foregroundStyle(Theme.mute)
-        }
-    }
+                .listRowBackground(Theme.card)
 
-    private var materials: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(tr("Materials", "Materiale"))
-                .font(.dmHeadline)
-                .foregroundStyle(Theme.ink)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(topics) { topic in
-                        Button {
-                            editingTopic = topic
-                        } label: {
-                            VStack(spacing: 1) {
-                                Text(topic.name)
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(Theme.ink)
-                                    .lineLimit(1)
-                                Text(tr("\(topic.pages) p. · \(topic.difficulty.title)",
-                                        "\(topic.pages) pag. · \(topic.difficulty.title)"))
-                                    .font(.caption2)
-                                    .foregroundStyle(Theme.mute)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Theme.cream, in: Capsule())
-                            .overlay(Capsule().strokeBorder(.black.opacity(0.06)))
-                            .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
+                Section {
+                    // I passi: si riordinano trascinando ≡ e si eliminano con il "-" rosso
+                    ForEach(steps) { step in
+                        HStack(spacing: 12) {
+                            CheckCircle(state: .todo)
+                            Text(step.title)
+                                .foregroundStyle(Theme.text)
+                            Spacer()
+                            Text("\(step.minutes) min")
+                                .font(.footnote)
+                                .foregroundStyle(Theme.secondary)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .onMove { from, to in steps.move(fromOffsets: from, toOffset: to) }
+                    .onDelete { offsets in steps.remove(atOffsets: offsets) }
 
-                    Button {
-                        nameFocused = false
-                        editingTopic = TopicDraft(name: "", pages: 20, difficulty: .medium)
-                    } label: {
+                    // L'ultima riga serve per aggiungere un passo
+                    HStack(spacing: 12) {
                         Image(systemName: "plus")
-                            .font(.title3.weight(.medium))
-                            .foregroundStyle(Theme.rust)
-                            .frame(width: 44, height: 44)
-                            .overlay(Circle().strokeBorder(Theme.rust, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: 24)
+                        TextField(tr("Add a tiny step", "Aggiungi un piccolo passo"), text: $newStep)
+                            .focused($newStepFocused)
+                            .submitLabel(.done)
+                            .onSubmit(addStep)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(tr("Add topic", "Aggiungi argomento"))
+                } header: {
+                    Text(tr("Tiny steps", "Piccoli passi"))
+                } footer: {
+                    Text(tr("One step = one thing you can do in 10–25 minutes.",
+                            "Un passo = una cosa che fai in 10–25 minuti."))
                 }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 2)
-            }
+                .listRowBackground(Theme.card)
 
-            Text(tr("One chip per topic or chapter, in study order. Tap a chip to change pages and difficulty.",
-                    "Una chip per argomento o capitolo, in ordine di studio. Tocca una chip per cambiare pagine e difficoltà."))
-                .font(.caption)
-                .foregroundStyle(Theme.mute)
+                Section {
+                    Button {
+                        showingGenerator = true
+                    } label: {
+                        Label(tr("Create the steps for me", "Crea i passi per me"), systemImage: "sparkles")
+                            .foregroundStyle(Theme.lightMain)
+                    }
+                } footer: {
+                    Text(tr("Tell me topics and pages: I'll build a realistic plan with reading, recall, review and a mock exam.",
+                            "Dimmi argomenti e pagine: creo un piano realistico con lettura, ripasso a memoria e simulazione."))
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
+                    HintCard(title: tr("Keep steps small:", "Tieni i passi piccoli:"),
+                             text: tr("10–25 minutes each works best", "10–25 minuti l'uno funziona meglio"))
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+                .listRowBackground(Theme.card)
+            }
+            .scrollContentBackground(.hidden)   // tolgo lo sfondo grigio del Form
+            // il Form sempre "in modifica": così si vedono le maniglie ≡ per riordinare
+            .environment(\.editMode, .constant(.active))
         }
-    }
-
-    /// 💡 Anteprima LIVE del piano: vedi subito quanto pesa e se ci sta nel tuo tempo.
-    private var planCard: some View {
-        let estimate = StepGenerator.estimate(topics: topics, kind: kind)
-        let perDay = Int((Double(estimate.minutes) / Double(studyDays)).rounded(.up))
-        let fits = Double(perDay) <= Double(dailyMinutes) * 1.1
-
-        return VStack(alignment: .leading, spacing: 10) {
-            ZStack(alignment: .topTrailing) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(topics.isEmpty
-                         ? tr("Add your topics", "Aggiungi gli argomenti")
-                         : tr("\(topics.count) topics · ≈ \(estimate.minutes.asDuration) in total",
-                              "\(topics.count) argomenti · ≈ \(estimate.minutes.asDuration) in tutto"))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink.opacity(0.8))
-                    Text(tr("\(estimate.steps) tiny steps", "\(estimate.steps) piccoli passi"))
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(Theme.ink)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.trailing, 90)
-
-                SlothView(pose: .thinking)
-                    .frame(width: 90, height: 115)
-                    .offset(x: 6, y: -6)
-            }
-
-            // La pista va da 0 (🐢) a 1 (🐇). La divido in 7 "scatti", uno per ogni opzione
-            // di dailyOptions: trasformo il valore 0…1 nell'indice dell'opzione più vicina.
-            TortoiseTrack(value: Double(paceIndex) / Double(dailyOptions.count - 1),
-                          dots: dailyOptions.count) { value in
-                let index = Int((value * Double(dailyOptions.count - 1)).rounded())
-                if index != paceIndex {
-                    Haptics.tap()
-                    paceIndex = index
-                }
-            }
-
-            Text(tr("Your pace: \(dailyMinutes.asDuration) a day", "Il tuo ritmo: \(dailyMinutes.asDuration) al giorno"))
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.cocoa)
-
-            if !topics.isEmpty {
-                Divider().overlay(Theme.cocoa.opacity(0.2))
-                HStack(alignment: .top, spacing: 8) {
-                    Text(fits ? "✅" : "⚠️")
-                    Text(fits
-                         ? tr("It fits: ≈ \(perDay.asDuration) a day for \(studyDays) days. The plan adapts by itself if you skip a day.",
-                              "Ci sta: ≈ \(perDay.asDuration) al giorno per \(studyDays) giorni. Il piano si adatta da solo se salti un giorno.")
-                         : tr("It doesn't fit: you'd need \(perDay.asDuration) a day. Go faster on the track, drop less important pages or consider a later date.",
-                              "Non ci sta: servirebbero \(perDay.asDuration) al giorno. Sposta la pista verso la lepre, togli pagine meno importanti o valuta l'appello dopo."))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        .dmScreen()
+        .sheet(isPresented: $showingGenerator) {
+            StepGeneratorSheet(defaultTopic: trimmedSubject) { generated in
+                steps.append(contentsOf: generated)
             }
         }
-        .padding(20)
-        .background(Theme.honey, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: Theme.honey.opacity(0.35), radius: 10, y: 5)
     }
 
     // MARK: - Azioni
 
-    /// Salva uno o più argomenti dal foglio (si possono incollare più nomi separati da virgole)
-    /// Se l'argomento esiste già (stesso id) lo SOSTITUISCO, altrimenti lo AGGIUNGO in fondo.
-    private func saveTopics(_ edited: TopicDraft) {
-        let names = StepGenerator.splitTopics(edited.name)
-        guard let firstName = names.first else { return }
-
-        if let index = topics.firstIndex(where: { $0.id == edited.id }) {
-            // Modifica di un argomento esistente
-            topics[index] = TopicDraft(id: edited.id, name: firstName, pages: edited.pages, difficulty: edited.difficulty)
-        } else {
-            for topicName in names where !topics.contains(where: { $0.name == topicName }) {
-                topics.append(TopicDraft(name: topicName, pages: edited.pages, difficulty: edited.difficulty))
-            }
-        }
+    private func addStep() {
+        let title = newStep.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+        steps.append(TinyStepDraft(title: title))
+        newStep = ""
+        newStepFocused = true      // la tastiera resta aperta per scrivere il prossimo
+        Haptics.tap()
     }
 
     private func save() {
         // guard = "se questa condizione non è vera, esci subito"
         guard canSave else { return }
-        let exam = Exam(name: trimmedName, date: date, emoji: "📘", colorIndex: 1,
-                        kind: kind, dailyMinutes: dailyMinutes)
+        let exam = Exam(name: trimmedSubject, date: date, emoji: "📘", colorIndex: 0,
+                        kind: .mixed, dailyMinutes: 60)
         context.insert(exam)
-        // Appendendo i passi alla relazione, SwiftData li inserisce automaticamente
-        exam.steps.append(contentsOf: StepGenerator.makePlan(topics: topics, kind: kind))
-
+        // Trasformo le bozze in passi veri, nell'ordine scelto (enumerated mi dà anche l'indice)
+        for (index, draft) in steps.enumerated() {
+            let step = StudyStep(title: draft.title,
+                                 topic: draft.topic.isEmpty ? trimmedSubject : draft.topic,
+                                 minutes: draft.minutes, order: index, kind: draft.kind)
+            exam.steps.append(step)   // appendendo alla relazione, SwiftData salva anche il passo
+        }
         Haptics.success()
         dismiss()
     }
 }
 
-// MARK: - Foglio per un argomento
+// MARK: - "✨ Crea i passi per me"
 
-struct TopicEditorSheet: View {
+/// Il foglio che usa StepGenerator: argomenti + pagine + difficoltà → passi realistici
+struct StepGeneratorSheet: View {
+    let defaultTopic: String
+    /// Restituisce i passi creati
+    var onCreate: ([TinyStepDraft]) -> Void
+
     @Environment(\.dismiss) private var dismiss
 
-    @State private var topic: TopicDraft
-    let isNew: Bool
-    var onSave: (TopicDraft) -> Void
-    var onDelete: ((UUID) -> Void)?
+    @State private var topicsText = ""
+    @State private var pages = 20
+    @State private var difficulty: Difficulty = .medium
+    @State private var kind: ExamKind = .mixed
 
-    init(topic: TopicDraft, isNew: Bool, onSave: @escaping (TopicDraft) -> Void, onDelete: ((UUID) -> Void)? = nil) {
-        _topic = State(initialValue: topic)
-        self.isNew = isNew
-        self.onSave = onSave
-        self.onDelete = onDelete
-    }
-
-    private var canSave: Bool {
-        !topic.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    /// Gli argomenti scritti separati da virgole ("Limiti, Derivate")
+    private var topics: [TopicDraft] {
+        StepGenerator.splitTopics(topicsText).map {
+            TopicDraft(name: $0, pages: pages, difficulty: difficulty)
+        }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            ScreenHeader(eyebrow: tr("Materials", "Materiale"),
-                         title: isNew ? tr("New topic", "Nuovo argomento") : tr("Edit topic", "Modifica argomento"))
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(tr("e.g. Limits, Derivatives, Integrals", "es. Limiti, Derivate, Integrali"),
+                              text: $topicsText, axis: .vertical)
+                } header: {
+                    Text(tr("Topics", "Argomenti"))
+                } footer: {
+                    Text(tr("Separate them with commas, in study order.", "Separali con una virgola, in ordine di studio."))
+                }
+                .listRowBackground(Theme.card)
 
-            TextField(tr("Topic or chapter, e.g. Ch 01", "Argomento o capitolo, es. Cap 01"), text: $topic.name)
-                .font(.title3.weight(.semibold))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(Theme.cream, in: Capsule())
-
-            if isNew {
-                Text(tr("Tip: paste more names separated by commas to add them all at once.",
-                        "Suggerimento: incolla più nomi separati da virgole per aggiungerli tutti insieme."))
-                    .font(.caption)
-                    .foregroundStyle(Theme.mute)
-            }
-
-            Stepper(value: $topic.pages, in: 1...400, step: topic.pages < 10 ? 1 : 5) {
-                Label(tr("\(topic.pages) pages", "\(topic.pages) pagine"), systemImage: "doc.text")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
-            }
-
-            HStack(spacing: 8) {
-                ForEach(Difficulty.allCases) { level in
-                    Button {
-                        Haptics.tap()
-                        topic.difficulty = level
-                    } label: {
-                        Text(level.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(topic.difficulty == level ? .white : Theme.ink)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(topic.difficulty == level ? Theme.cocoa : Theme.cream, in: Capsule())
+                Section(tr("Each topic", "Ogni argomento")) {
+                    Stepper(value: $pages, in: 1...400, step: pages < 10 ? 1 : 5) {
+                        Text(tr("\(pages) pages", "\(pages) pagine"))
                     }
-                    .buttonStyle(.plain)
+                    Picker(tr("Difficulty", "Difficoltà"), selection: $difficulty) {
+                        ForEach(Difficulty.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker(tr("Exam type", "Tipo d'esame"), selection: $kind) {
+                        ForEach(ExamKind.allCases) { Text($0.title).tag($0) }
+                    }
+                }
+                .listRowBackground(Theme.card)
+
+                if !topics.isEmpty {
+                    let estimate = StepGenerator.estimate(topics: topics, kind: kind)
+                    Section {
+                        Text(tr("\(estimate.steps) tiny steps · ≈ \(estimate.minutes.asDuration) in total",
+                                "\(estimate.steps) piccoli passi · ≈ \(estimate.minutes.asDuration) in tutto"))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .listRowBackground(Theme.card)
                 }
             }
-
-            Text(tr("≈ \((topic.pages * topic.difficulty.minutesPerPage).asDuration) of reading. Estimates start at 3-7 min per page and adapt to your real speed.",
-                    "≈ \((topic.pages * topic.difficulty.minutesPerPage).asDuration) di lettura. Le stime partono da 3-7 min a pagina e si adattano alla tua velocità reale."))
-                .font(.caption)
-                .foregroundStyle(Theme.mute)
-
-            Spacer(minLength: 0)
-
-            Button(isNew ? tr("Add", "Aggiungi") : tr("Save", "Salva")) {
-                onSave(topic)
-                Haptics.success()
-                dismiss()
-            }
-            .buttonStyle(PillButtonStyle(variant: .dark))
-            .disabled(!canSave)
-
-            if !isNew, let onDelete {
-                Button(tr("Remove topic", "Rimuovi argomento"), role: .destructive) {
-                    onDelete(topic.id)
-                    dismiss()
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
+            .navigationTitle(tr("Create the steps", "Crea i passi"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(tr("Cancel", "Annulla")) { dismiss() }
                 }
-                .buttonStyle(TextLinkStyle(color: Theme.rust))
-                .frame(maxWidth: .infinity)
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(tr("Add", "Aggiungi")) {
+                        // da StepDraft (del generatore) a TinyStepDraft (della schermata)
+                        let drafts = StepGenerator.makeDrafts(topics: topics, kind: kind).map {
+                            TinyStepDraft(title: $0.title, minutes: $0.minutes, kind: $0.kind, topic: $0.topic)
+                        }
+                        onCreate(drafts)
+                        Haptics.success()
+                        dismiss()
+                    }
+                    .bold()
+                    .disabled(topics.isEmpty)
+                }
             }
         }
-        .padding(24)
-        .background(Theme.paper.ignoresSafeArea())
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
+        .onAppear {
+            if topicsText.isEmpty { topicsText = defaultTopic }
+        }
+        .preferredColorScheme(.dark)
     }
 }
 

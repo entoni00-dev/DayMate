@@ -49,11 +49,37 @@ final class Countdown {
         total - remaining
     }
 
+    /// true se l'utente ha premuto ⏸ (il tempo è fermo, ma non è finito)
+    private(set) var isPaused = false
+
     /// Avvia il timer per un certo numero di secondi
     func start(seconds: TimeInterval) {
         total = seconds
         remaining = seconds
-        endDate = Date().addingTimeInterval(seconds)
+        isPaused = false
+        startTicking()
+    }
+
+    /// ⏸ Ferma il tempo senza perderlo
+    func pause() {
+        guard isRunning, let endDate else { return }
+        remaining = max(0, endDate.timeIntervalSinceNow)   // salvo quanto mancava
+        timer?.invalidate()
+        timer = nil
+        isRunning = false
+        isPaused = true
+    }
+
+    /// ▶︎ Riparte da dove si era fermato
+    func resume() {
+        guard isPaused else { return }
+        isPaused = false
+        startTicking()
+    }
+
+    /// Calcola la nuova data di fine (adesso + quanto manca) e fa partire il "tic tac"
+    private func startTicking() {
+        endDate = Date().addingTimeInterval(remaining)
         isRunning = true
 
         timer?.invalidate()

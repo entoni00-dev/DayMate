@@ -4,17 +4,18 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  🗓️ La modalità "Fai un planner": la tua giornata e la tua settimana, sotto una barra in alto.
-//  È la "home" di chi sceglie Planner all'inizio.
+//  🗓️ La modalità Planner: la "home" di chi sceglie "Plan my day" nella schermata iniziale.
 //
-//   [ Giorno ] [ Settimana ] [ Scadenze ]              + Attività
+//   [Planner]                    ⚙️ (+)
+//   Plan
+//   ( Giorno ) Settimana  Scadenze
 //
-//   - Giorno    → la card lilla con le cose da fare (e i passi di studio del giorno) + l'acqua
-//   - Settimana → i 7 giorni in colpo d'occhio: attività, studio, esami, acqua
-//   - Scadenze  → le tue scadenze (+ quelle degli esami, se usi anche Studio)
+//   - Giorno    → la schermata "Plan" di Sketch: settimana, studio, impegni, acqua
+//   - Settimana → i 7 giorni in colpo d'occhio
+//   - Scadenze  → consegne, pagamenti, esami… con il conto alla rovescia
 //
 //  Tutte e tre le sezioni condividono lo stesso giorno scelto: tocchi un giorno nella
-//  Settimana e si apre quel giorno.
+//  Settimana e si apre quel giorno. Il "+" apre "Add to your day".
 //
 
 import SwiftUI
@@ -26,6 +27,15 @@ enum PlannerTab: String, CaseIterable {
 
     var title: String {
         switch self {
+        case .day:       return tr("Plan", "Pianifica")
+        case .week:      return tr("Week", "Settimana")
+        case .deadlines: return tr("Deadlines", "Scadenze")
+        }
+    }
+
+    /// Il nome corto nella barra
+    var shortTitle: String {
+        switch self {
         case .day:       return tr("Day", "Giorno")
         case .week:      return tr("Week", "Settimana")
         case .deadlines: return tr("Deadlines", "Scadenze")
@@ -36,18 +46,18 @@ enum PlannerTab: String, CaseIterable {
         switch self {
         case .day:       return "checklist"
         case .week:      return "calendar"
-        case .deadlines: return "flag.checkered"
+        case .deadlines: return "flag.fill"
         }
     }
 
     /// La stessa sezione pronta per la barra in alto
     var item: TabItem {
-        TabItem(id: rawValue, title: title, icon: icon)
+        TabItem(id: rawValue, title: shortTitle, icon: icon)
     }
 }
 
 struct PlannerModeView: View {
-    /// Il percorso di navigazione (tenuto in RootView)
+    // @Binding = il percorso di navigazione appartiene a RootView
     @Binding var path: NavigationPath
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
@@ -74,6 +84,7 @@ struct PlannerModeView: View {
         VStack(spacing: 0) {
             SpaceHeader(mode: .planner,
                         title: tab.title,
+                        subtitle: tab == .day ? day.longDayText : nil,
                         items: PlannerTab.allCases.map { $0.item },
                         selectedID: tab.rawValue,
                         onSelect: { id in
@@ -82,13 +93,13 @@ struct PlannerModeView: View {
                                 withAnimation(.snappy) { tab = newTab }
                             }
                         },
-                        addLabel: tab == .deadlines ? tr("Deadline", "Scadenza") : tr("Task", "Attività"),
+                        addLabel: tr("Add to your day", "Aggiungi alla giornata"),
                         onAdd: { showingAddTask = true })
 
             Group {
                 switch tab {
                 case .day:
-                    PlannerView(day: $day, embedded: true)
+                    PlannerView(day: $day)
                 case .week:
                     PlannerWeekView(day: $day) { chosen in
                         day = chosen
@@ -123,7 +134,7 @@ struct PlannerWeekView: View {
 
     private var calendar: Calendar {
         var calendar = Calendar.current
-        calendar.firstWeekday = 2
+        calendar.firstWeekday = 2   // la settimana parte dal lunedì
         return calendar
     }
 
@@ -142,16 +153,17 @@ struct PlannerWeekView: View {
     var body: some View {
         // ScrollView: se il contenuto è più alto dello schermo, si scorre
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     weekButton("chevron.left", weeks: -1)
                     Spacer()
                     Text(weekTitle)
-                        .font(.dmSerifBig)
-                        .foregroundStyle(Theme.ink)
+                        .font(.headline)
+                        .foregroundStyle(Theme.text)
                     Spacer()
                     weekButton("chevron.right", weeks: 1)
                 }
+                .padding(.bottom, 4)
 
                 let allPlans = plans
                 ForEach(days, id: \.self) { date in
@@ -162,17 +174,13 @@ struct PlannerWeekView: View {
                     }
                     .buttonStyle(.plain)
                 }
-
-                Text(tr("Tap a day to open it.", "Tocca un giorno per aprirlo."))
-                    .font(.caption)
-                    .foregroundStyle(Theme.mute)
-                    .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .padding(.bottom, 30)
         }
     }
 
+    /// "26 Oct – 1 Nov"
     private var weekTitle: String {
         guard let first = days.first, let last = days.last else { return "" }
         let style = Date.FormatStyle.dateTime.day().month(.abbreviated).locale(L10n.locale)
@@ -185,67 +193,65 @@ struct PlannerWeekView: View {
     private func dayRow(_ date: Date, plans: [StudyPlan]) -> some View {
         let dayTasks = tasks.filter { calendar.isDate($0.day, inSameDayAs: date) }
         let doneTasks = dayTasks.filter(\.isDone).count
-        let studySteps = plans.compactMap { plan in
-            plan.days.first { calendar.isDate($0.date, inSameDayAs: date) }
-        }.flatMap(\.steps)
         let studyMinutes = plans.compactMap { plan in
             plan.days.first { calendar.isDate($0.date, inSameDayAs: date) }?.minutes
         }.reduce(0, +)
         let examsToday = exams.filter { calendar.isDate($0.date, inSameDayAs: date) }
-        let deadlinesToday = dayTasks.filter(\.isDeadline)
+        let deadlines = dayTasks.filter(\.isDeadline)
         let glasses = waterLogs.first { calendar.isDate($0.day, inSameDayAs: date) }?.glasses ?? 0
         let isToday = calendar.isDateInToday(date)
 
-        return HStack(alignment: .center, spacing: 14) {
+        return HStack(spacing: 14) {
+            // il "quadratino" del giorno, come nella settimana in alto
             VStack(spacing: 2) {
-                Text(date.formatted(.dateTime.weekday(.abbreviated).locale(L10n.locale)).capitalized)
-                    .font(.system(.caption, design: .serif, weight: .bold))
+                Text(date.formatted(.dateTime.weekday(.narrow).locale(L10n.locale)))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(isToday ? Theme.background : Theme.secondary)
                 Text("\(calendar.component(.day, from: date))")
-                    .font(.system(.title2, design: .serif, weight: .bold))
+                    .font(.system(.title3, weight: .bold))
+                    .foregroundStyle(isToday ? Theme.background : Theme.text)
             }
-            .foregroundStyle(isToday ? .white : Theme.ink)
-            .frame(width: 52, height: 58)
-            .background(isToday ? Theme.cocoa : Theme.lilacSoft,
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(width: 46, height: 58)
+            .background(isToday ? Theme.main : Theme.highlight,
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(examsToday) { exam in
                     Label(tr("\(exam.name) exam", "Esame di \(exam.name)"), systemImage: "flag.checkered")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.accent)
                 }
-                ForEach(deadlinesToday) { task in
+                ForEach(deadlines) { task in
                     Label(task.title, systemImage: "flag.fill")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.accent)
                         .lineLimit(1)
                 }
                 if !dayTasks.isEmpty {
                     Label(tr("\(doneTasks)/\(dayTasks.count) tasks", "\(doneTasks)/\(dayTasks.count) attività"),
                           systemImage: "checklist")
                 }
-                if !studySteps.isEmpty {
-                    Label(tr("\(studySteps.count) study steps · \(studyMinutes.asDuration)",
-                             "\(studySteps.count) passi di studio · \(studyMinutes.asDuration)"),
-                          systemImage: "book.fill")
+                if studyMinutes > 0 {
+                    Label(tr("\(studyMinutes.asDuration) of study", "\(studyMinutes.asDuration) di studio"),
+                          systemImage: "book")
                 }
                 if glasses > 0 {
-                    Label(tr("\(glasses) glasses of water", "\(glasses) bicchieri d'acqua"), systemImage: "drop.fill")
+                    Label("\(glasses) / \(AppSettings.waterGoal)", systemImage: "drop.fill")
                 }
-                if examsToday.isEmpty && dayTasks.isEmpty && studySteps.isEmpty && glasses == 0 {
+                if examsToday.isEmpty && dayTasks.isEmpty && studyMinutes == 0 && glasses == 0 {
                     Text(tr("Free day", "Giorno libero"))
-                        .foregroundStyle(Theme.mute)
                 }
             }
             .font(.subheadline)
-            .foregroundStyle(Theme.ink)
+            .foregroundStyle(Theme.secondary)
 
             Spacer(minLength: 0)
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Theme.mute.opacity(0.6))
+                .foregroundStyle(Theme.secondary)
         }
-        .dmCard(radius: 22, padding: 12)
+        .padding(12)
+        .cardBackground(radius: 18)
     }
 
     private func weekButton(_ symbol: String, weeks: Int) -> some View {
@@ -257,9 +263,9 @@ struct PlannerWeekView: View {
         } label: {
             Image(systemName: symbol)
                 .font(.headline)
-                .foregroundStyle(Theme.ink)
-                .frame(width: 40, height: 40)
-                .background(Theme.pillGray, in: Circle())
+                .foregroundStyle(Theme.lightMain)
+                .frame(width: 38, height: 38)
+                .background(Theme.card, in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(weeks < 0 ? tr("Previous week", "Settimana precedente") : tr("Next week", "Settimana successiva"))
@@ -271,11 +277,12 @@ struct PlannerWeekView: View {
 struct PlannerDeadlinesView: View {
     // modelContext = il "quaderno" di SwiftData: lo uso per inserire ed eliminare dati
     @Environment(\.modelContext) private var context
+    // @Query legge i dati salvati con SwiftData e ridisegna la vista da sola quando cambiano
     @Query(sort: \Exam.date) private var exams: [Exam]
     @Query(filter: #Predicate<PlannerTask> { $0.isDeadline }, sort: \PlannerTask.day)
     private var deadlineTasks: [PlannerTask]
 
-    private var upcoming: [Exam] { exams.filter { !$0.isPast } }
+    private var upcomingExams: [Exam] { exams.filter { !$0.isPast } }
 
     /// Solo le scadenze da oggi in poi (quelle passate non servono più)
     private var upcomingDeadlines: [PlannerTask] {
@@ -284,178 +291,242 @@ struct PlannerDeadlinesView: View {
     }
 
     var body: some View {
+        // ScrollView: se il contenuto è più alto dello schermo, si scorre
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(upcomingDeadlines) { task in
-                    deadlineRow(task)
-                }
-
-                if upcoming.isEmpty && upcomingDeadlines.isEmpty {
-                    VStack(spacing: 10) {
-                        SlothView(pose: .calendar)
-                            .frame(height: 140)
+            VStack(alignment: .leading, spacing: 10) {
+                if upcomingExams.isEmpty && upcomingDeadlines.isEmpty {
+                    VStack(spacing: 12) {
+                        GlowRings(size: 200) {
+                            BlobView(pose: .ready)
+                        }
                         Text(tr("No deadlines", "Nessuna scadenza"))
-                            .font(.dmTitle2)
-                            .foregroundStyle(Theme.ink)
-                        Text(tr("Tap \"+ Deadline\" to add one: a hand-in, a payment, an appointment. It will also appear in your week.",
-                                "Tocca \"+ Scadenza\" per aggiungerne una: una consegna, un pagamento, un appuntamento. Comparirà anche nella settimana."))
+                            .font(.system(.title3, weight: .bold))
+                            .foregroundStyle(Theme.text)
+                        Text(tr("Tap + and turn on \"It's a deadline\": a hand-in, a payment, an appointment.",
+                                "Tocca + e attiva \"È una scadenza\": una consegna, un pagamento, un appuntamento."))
                             .font(.subheadline)
-                            .foregroundStyle(Theme.mute)
+                            .foregroundStyle(Theme.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.top, 30)
+                    .padding(.top, 20)
                 }
 
-                ForEach(upcoming) { exam in
-                    // Collegamento allo Studio: tocchi e apri il dettaglio dell'esame
-                    NavigationLink(value: exam) {
-                        HStack(spacing: 14) {
-                            VStack(spacing: 0) {
-                                Text(exam.date.formatted(.dateTime.month(.abbreviated).locale(L10n.locale)).uppercased())
-                                    .font(.caption.weight(.bold))
-                                Text("\(Calendar.current.component(.day, from: exam.date))")
-                                    .font(.system(.title, design: .serif, weight: .bold))
-                            }
-                            .foregroundStyle(Theme.ink)
-                            .frame(width: 60, height: 64)
-                            .background(Theme.honey, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(exam.name)
-                                    .font(.dmHeadline)
-                                    .foregroundStyle(Theme.ink)
-                                Text(exam.countdownText)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Theme.rust)
-                                ProgressView(value: exam.progress)
-                                    .tint(Theme.honey)
-                                Text(exam.stepsDoneText)
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.mute)
-                            }
-                            Image(systemName: "chevron.right")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(Theme.mute.opacity(0.6))
+                ForEach(upcomingDeadlines) { task in
+                    deadlineRow(title: task.title, date: task.day, done: task.isDone) {
+                        task.isDone.toggle()
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            withAnimation { context.delete(task) }
+                        } label: {
+                            Label(tr("Delete", "Elimina"), systemImage: "trash")
                         }
-                        .dmCard(radius: 22, padding: 14)
+                    }
+                }
+
+                // Gli esami (se si usa anche la modalità Studio): tocco e apro il dettaglio
+                ForEach(upcomingExams) { exam in
+                    NavigationLink(value: exam) {
+                        deadlineRow(title: tr("\(exam.name) exam", "Esame di \(exam.name)"),
+                                    date: exam.date, done: false, action: nil)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .padding(.bottom, 30)
         }
     }
 
-    private func deadlineRow(_ task: PlannerTask) -> some View {
-        let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: task.day).day ?? 0
+    /// Una scadenza: il "foglietto" con la data, il titolo e quanti giorni mancano
+    private func deadlineRow(title: String, date: Date, done: Bool, action: (() -> Void)?) -> some View {
+        let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now),
+                                                   to: Calendar.current.startOfDay(for: date)).day ?? 0
 
         return HStack(spacing: 14) {
             VStack(spacing: 0) {
-                Text(task.day.formatted(.dateTime.month(.abbreviated).locale(L10n.locale)).uppercased())
-                    .font(.caption.weight(.bold))
-                Text("\(Calendar.current.component(.day, from: task.day))")
-                    .font(.system(.title, design: .serif, weight: .bold))
+                Text(date.formatted(.dateTime.month(.abbreviated).locale(L10n.locale)).uppercased())
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.secondary)
+                Text("\(Calendar.current.component(.day, from: date))")
+                    .font(.system(.title2, weight: .bold))
+                    .foregroundStyle(Theme.text)
             }
-            .foregroundStyle(Theme.ink)
-            .frame(width: 60, height: 64)
-            .background(Theme.lilac, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(width: 52, height: 56)
+            .background(Theme.highlight, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(task.title)
-                    .font(.dmHeadline)
-                    .foregroundStyle(Theme.ink)
-                    .strikethrough(task.isDone)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(done ? Theme.secondary : Theme.text)
+                    .strikethrough(done)
                 Text(days == 0 ? tr("Today", "Oggi")
                      : days == 1 ? tr("Tomorrow", "Domani")
                      : tr("In \(days) days", "Tra \(days) giorni"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.rust)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
             }
             Spacer(minLength: 0)
-            Button {
-                withAnimation(.snappy) { task.isDone.toggle() }
-                if task.isDone { Haptics.success() }
-            } label: {
-                SquareCheck(isOn: task.isDone, tint: Theme.cocoa)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(tr("Done", "Fatto"))
-        }
-        .dmCard(radius: 22, padding: 14)
-        // .contextMenu = il menu che compare tenendo premuto
-        .contextMenu {
-            Button(role: .destructive) {
-                withAnimation { context.delete(task) }
-            } label: {
-                Label(tr("Delete", "Elimina"), systemImage: "trash")
+
+            if let action {
+                Button {
+                    Haptics.tap()
+                    withAnimation(.snappy) { action() }
+                } label: {
+                    CheckCircle(state: done ? .done : .todo)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tr("Done", "Fatto"))
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondary)
             }
         }
+        .padding(12)
+        .cardBackground(radius: 18)
     }
 }
 
-// MARK: - Nuova attività
+// MARK: - "Add to your day" (schermata 09 di Sketch)
 
 struct AddTaskSheet: View {
-    // dismiss() chiude questa schermata (o il foglio) e torna indietro
+    // dismiss() chiude il foglio
     @Environment(\.dismiss) private var dismiss
+    // modelContext = il "quaderno" di SwiftData: lo uso per inserire ed eliminare dati
     @Environment(\.modelContext) private var context
 
+    // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
     @State private var title = ""
     @State private var day: Date
+    @State private var kind: TaskKind = .duty
+    @State private var time: Date
+    @State private var duration = 30
     @State private var isDeadline: Bool
     // @FocusState dice quale campo di testo ha la tastiera (così posso aprirla da codice)
     @FocusState private var focused: Bool
 
+    private let durations = [15, 30, 45, 60, 90, 120, 180]
+
     init(day: Date, isDeadline: Bool = false) {
+        // Con @State dentro un init si usa il "_" davanti al nome
         _day = State(initialValue: day)
         _isDeadline = State(initialValue: isDeadline)
+        // orario proposto: la prossima ora piena (es. adesso 14:20 → 15:00)
+        let nextHour = Calendar.current.nextDate(after: .now, matching: DateComponents(minute: 0),
+                                                 matchingPolicy: .nextTime) ?? .now
+        _time = State(initialValue: nextHour)
+    }
+
+    private var canAdd: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            ScreenHeader(eyebrow: "Planner",
-                         title: isDeadline ? tr("New deadline", "Nuova scadenza") : tr("New task", "Nuova attività"))
+        // ScrollView: se il contenuto è più alto dello schermo, si scorre
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(tr("Add to your day", "Aggiungi alla giornata"))
+                    .font(.dmCardTitle)
+                    .foregroundStyle(Theme.text)
+                    .padding(.top, 24)
 
-            TextField(tr("E.g. Print the notes", "Es. Stampare gli appunti"), text: $title)
-                .font(.title3.weight(.semibold))
-                .focused($focused)
-                .submitLabel(.done)
-                .onSubmit(save)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(Theme.cream, in: Capsule())
+                TextField(tr("e.g. Gym, lab report…", "es. Palestra, relazione…"), text: $title)
+                    .font(.body)
+                    .foregroundStyle(Theme.text)
+                    .focused($focused)
+                    .submitLabel(.done)
+                    .padding(.horizontal, 18)
+                    .frame(height: 52)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            DatePicker(tr("Day", "Giorno"), selection: $day, displayedComponents: .date)
-                .font(.headline)
-                .foregroundStyle(Theme.ink)
+                // TYPE: Study / Duty / Free time
+                SectionHeader(text: tr("Type", "Tipo"))
+                HStack(spacing: 10) {
+                    ForEach(TaskKind.allCases) { option in
+                        Button {
+                            Haptics.tap()
+                            kind = option
+                        } label: {
+                            VStack(spacing: 10) {
+                                IconTile(systemName: option.icon, inverted: kind == option)
+                                Text(option.title)
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(kind == option ? Theme.background : Theme.text)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 96)
+                            .background(kind == option ? Theme.main : Theme.card,
+                                        in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
 
-            Toggle(isOn: $isDeadline) {
-                Label(tr("It's a deadline", "È una scadenza"), systemImage: "flag.fill")
-                    .font(.headline)
-                    .foregroundStyle(Theme.ink)
+                // WHEN: giorno, ora, durata
+                SectionHeader(text: tr("When", "Quando"))
+                VStack(spacing: 0) {
+                    DatePicker(tr("Day", "Giorno"), selection: $day, displayedComponents: .date)
+                        .padding(.horizontal, 18)
+                        .frame(height: 54)
+                    Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
+                    DatePicker(tr("Time", "Ora"), selection: $time, displayedComponents: .hourAndMinute)
+                        .padding(.horizontal, 18)
+                        .frame(height: 54)
+                    Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
+                    HStack {
+                        Text(tr("Duration", "Durata"))
+                        Spacer()
+                        Picker(tr("Duration", "Durata"), selection: $duration) {
+                            ForEach(durations, id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                        .labelsHidden()
+                    }
+                    .padding(.horizontal, 18)
+                    .frame(height: 54)
+                    Rectangle().fill(Theme.highlight).frame(height: 1).padding(.leading, 18)
+                    Toggle(isOn: $isDeadline) {
+                        Label(tr("It's a deadline", "È una scadenza"), systemImage: "flag.fill")
+                    }
+                    .tint(Theme.accent)
+                    .padding(.horizontal, 18)
+                    .frame(height: 54)
+                }
+                .font(.system(.callout, weight: .medium))
+                .foregroundStyle(Theme.text)
+                .cardBackground(radius: 18)
             }
-            .tint(Theme.honey)
-
-            Spacer(minLength: 0)
-
-            Button(tr("Add", "Aggiungi"), action: save)
-                .buttonStyle(PillButtonStyle(variant: .dark))
-                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .padding(.horizontal, 20)
         }
-        .padding(24)
-        .background(Theme.paper.ignoresSafeArea())
-        .presentationDetents([.medium])
+        .safeAreaInset(edge: .bottom) {
+            Button(tr("Add", "Aggiungi"), action: save)
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(!canAdd)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .background(Theme.background)
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        // .onAppear viene chiamato quando la schermata compare
+        .presentationCornerRadius(34)
+        .preferredColorScheme(.dark)
+        // .onAppear viene chiamato quando il foglio compare: apro subito la tastiera
         .onAppear { focused = true }
     }
 
     private func save() {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        context.insert(PlannerTask(title: trimmed, day: day, isDeadline: isDeadline))
+        // L'orario deve essere nel giorno scelto: prendo ore e minuti da `time` e li metto su `day`
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: time)
+        let finalTime = Calendar.current.date(bySettingHour: parts.hour ?? 9, minute: parts.minute ?? 0,
+                                              second: 0, of: day)
+        context.insert(PlannerTask(title: trimmed, day: day, kind: kind, time: finalTime,
+                                   durationMinutes: duration, isDeadline: isDeadline))
         Haptics.success()
         dismiss()
     }

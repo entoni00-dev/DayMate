@@ -40,7 +40,7 @@ struct CoachView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 if !embedded {
-                    BackPill(title: "Home")
+                    TopLink(title: "Home", showsChevron: true)
                     ScreenHeader(eyebrow: tr("Study better, not more", "Studiare meglio, non di più"),
                                  title: "Coach")
                 }
@@ -70,7 +70,7 @@ struct CoachView: View {
                 } label: {
                     toolRow(emoji: "🔬", title: tr("What really works", "Cosa funziona davvero"),
                             subtitle: tr("Study techniques according to research", "Le tecniche di studio secondo la ricerca"),
-                            color: Theme.water)
+                            color: Theme.lightMain)
                 }
                 .buttonStyle(.plain)
             }
@@ -85,7 +85,7 @@ struct CoachView: View {
                 subtitle: openDoubts.isEmpty
                     ? tr("Write down what you don't understand", "Annota quello che non ti è chiaro")
                     : tr("\(openDoubts.count) to solve", "\(openDoubts.count) da risolvere"),
-                color: Theme.lilac)
+                color: Theme.lightMain)
     }
 
     // MARK: - Tutor AI
@@ -98,22 +98,22 @@ struct CoachView: View {
                 chat
             } label: {
                 HStack(spacing: 14) {
-                    SlothView(pose: .reading)
+                    BlobView(pose: .reading)
                         .frame(width: 64, height: 80)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(tr("AI tutor", "Tutor AI"))
-                            .font(.dmTitle2)
-                            .foregroundStyle(Theme.ink)
+                            .font(.system(.title2, weight: .bold))
+                            .foregroundStyle(Theme.text)
                         Text(tr("Explanations, exam questions and examples on your topics. Runs on your phone.",
                                 "Spiegazioni, domande d'esame ed esempi sui tuoi argomenti. Gira sul telefono."))
                             .font(.subheadline)
-                            .foregroundStyle(Theme.ink.opacity(0.8))
+                            .foregroundStyle(Theme.text.opacity(0.8))
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(Theme.text)
                 }
-                .dmCard(Theme.lilac)
+                .dmCard(Theme.highlight)
             }
             .buttonStyle(.plain)
         } else {
@@ -126,8 +126,8 @@ struct CoachView: View {
 
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
-            .font(.dmTitle2)
-            .foregroundStyle(Theme.ink)
+            .font(.system(.title2, weight: .bold))
+            .foregroundStyle(Theme.text)
             .padding(.top, 6)
     }
 
@@ -139,11 +139,11 @@ struct CoachView: View {
                 .background(tip.color.opacity(0.25), in: Circle())
             VStack(alignment: .leading, spacing: 4) {
                 Text(tip.title)
-                    .font(.dmHeadline)
-                    .foregroundStyle(Theme.ink)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(Theme.text)
                 Text(tip.text)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.mute)
+                    .foregroundStyle(Theme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -159,15 +159,15 @@ struct CoachView: View {
                 .background(color.opacity(0.3), in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.dmHeadline)
-                    .foregroundStyle(Theme.ink)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(Theme.text)
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundStyle(Theme.mute)
+                    .foregroundStyle(Theme.secondary)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundStyle(Theme.mute.opacity(0.6))
+                .foregroundStyle(Theme.secondary.opacity(0.6))
         }
         .dmCard()
     }
@@ -202,16 +202,16 @@ struct AIComingSoonCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                SlothView(pose: .thinking)
+                BlobView(pose: .tired)
                     .frame(width: 56, height: 72)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tr("AI tutor", "Tutor AI"))
-                        .font(.dmTitle2)
-                        .foregroundStyle(Theme.ink)
+                        .font(.system(.title2, weight: .bold))
+                        .foregroundStyle(Theme.text)
                     Text(tr("COMING SOON", "IN ARRIVO"))
                         .font(.caption.bold())
                         .tracking(1.2)
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.lightMain)
                 }
                 Spacer()
             }
@@ -222,10 +222,10 @@ struct AIComingSoonCard: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(feature.title)
                             .font(.subheadline.bold())
-                            .foregroundStyle(Theme.ink)
+                            .foregroundStyle(Theme.text)
                         Text(feature.detail)
                             .font(.caption)
-                            .foregroundStyle(Theme.ink.opacity(0.75))
+                            .foregroundStyle(Theme.text.opacity(0.75))
                     }
                 }
             }
@@ -236,10 +236,10 @@ struct AIComingSoonCard: View {
                 Text(tr("It will run on your phone with the Apple Intelligence model: no server, your data never leaves your iPhone.",
                         "Girerà sul telefono con il modello di Apple Intelligence: niente server, i tuoi dati non escono dall'iPhone."))
                     .font(.caption)
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.text)
             } icon: {
                 Image(systemName: "lock.shield.fill")
-                    .foregroundStyle(Theme.leaf)
+                    .foregroundStyle(Theme.accent)
             }
 
             if let reason {
@@ -247,12 +247,12 @@ struct AIComingSoonCard: View {
                     Text(reason).font(.caption)
                 } icon: {
                     Image(systemName: "info.circle.fill")
-                        .foregroundStyle(Theme.rust)
+                        .foregroundStyle(Theme.lightMain)
                 }
-                .foregroundStyle(Theme.mute)
+                .foregroundStyle(Theme.secondary)
             }
         }
-        .dmCard(Theme.lilacSoft)
+        .dmCard(Theme.highlight)
     }
 }
 

@@ -4,18 +4,17 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  Il timer del RISCALDAMENTO (2-3 minuti).
-//
-//  Perché così corto? Il Pomodoro classico chiede 25 minuti: troppi se sei bloccato.
-//  Qui l'obiettivo NON è studiare tanto, è superare la soglia d'ingresso.
-//  Spesso, una volta partiti, si continua da soli (e la schermata dopo lo permette).
+//  Il timer del RISCALDAMENTO (solo per "Stuck": "Easier step first").
+//  Stessa grafica del timer di studio, ma dura 2 minuti e chiede un gesto minuscolo
+//  ("apri il libro alla pagina giusta"). L'obiettivo NON è studiare: è superare la
+//  soglia d'ingresso. Spesso, una volta partiti, si continua da soli.
 //
 
 import SwiftUI
 
 struct FocusTimerView: View {
     let step: PlannedStep
-    /// Callback: (secondi studiati, l'utente ha premuto "Fatto"?)
+    /// Callback: (secondi passati, l'utente ha premuto "Fatto"?)
     var onFinish: (_ elapsedSeconds: Int, _ markedDone: Bool) -> Void
 
     // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
@@ -24,30 +23,40 @@ struct FocusTimerView: View {
     @State private var finished = false
 
     var body: some View {
-        TimerScreen(
-            eyebrow: tr("Warm-up", "Riscaldamento"),
-            title: step.text,
-            progress: countdown.progress,
-            active: true,
-            pose: .reading,
-            time: countdown.remaining.mmss,
-            caption: tr("Lock your phone and put it away: I'll let you know.",
-                        "Blocca pure il telefono e mettilo via: ti avviso io.")
-        ) {
-            EmptyView()
-        } buttons: {
-            Button {
-                finish(markedDone: true)
-            } label: {
-                Label(tr("Done!", "Fatto!"), systemImage: "checkmark")
+        VStack(spacing: 18) {
+            VStack(spacing: 6) {
+                Text(tr("Easier step first · \(step.minutes) min", "Prima un passo facilissimo · \(step.minutes) min"))
+                    .font(.system(.subheadline, weight: .medium))
+                    .foregroundStyle(Theme.accent)
+                Text(step.text)
+                    .font(.system(.title2, weight: .bold))
+                    .foregroundStyle(Theme.text)
+                    .multilineTextAlignment(.center)
             }
-            .buttonStyle(PillButtonStyle(variant: .dark))
+            .padding(.horizontal, 24)
 
-            Button(tr("I'll stop earlier, that's fine", "Mi fermo prima, va bene così")) {
+            Spacer(minLength: 8)
+
+            TimerRing(progress: countdown.progress, time: countdown.remaining.mmss)
+
+            Text(tr("Just this. Nothing more.", "Solo questo. Niente di più."))
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondary)
+
+            Spacer(minLength: 8)
+
+            RoundTimerButton(systemName: "checkmark", prominent: true,
+                             accessibilityTitle: tr("Done", "Fatto")) {
+                finish(markedDone: true)
+            }
+
+            Button(tr("I'll stop here, that's fine", "Mi fermo qui, va bene così")) {
                 finish(markedDone: false)
             }
-            .buttonStyle(TextLinkStyle())
+            .buttonStyle(QuietButtonStyle())
+            .padding(.bottom, 8)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         // .onAppear viene chiamato quando la schermata compare
         .onAppear(perform: startIfNeeded)
         .onDisappear {
@@ -62,9 +71,7 @@ struct FocusTimerView: View {
         started = true
 
         let seconds = TimeInterval(step.minutes * 60)
-        countdown.onFinish = {
-            finish(markedDone: false)
-        }
+        countdown.onFinish = { finish(markedDone: false) }
         countdown.start(seconds: seconds)
 
         NotificationManager.shared.schedule(
@@ -88,5 +95,6 @@ struct FocusTimerView: View {
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    FocusTimerView(step: PlannedStep(text: "Read the first page of «Limits»", minutes: 2, step: nil)) { _, _ in }
+    FocusTimerView(step: PlannedStep(text: "Open the book at the right page", minutes: 2, step: nil)) { _, _ in }
+        .background(Theme.background)
 }

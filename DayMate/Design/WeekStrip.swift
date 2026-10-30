@@ -4,10 +4,15 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  La striscia della settimana di Sketch:   M  T (W) T  F  S  S
-//                                            7  8  9  10 11 12 13
-//  Il giorno scelto ha il contorno a capsula. Un puntino segna i giorni "speciali"
-//  (es. il giorno di un esame). Scorri a destra/sinistra per cambiare settimana.
+//  La settimana della schermata "Plan" di Sketch:
+//
+//   ┌──┐┌──┐┌──┐┏━━┓┌──┐┌──┐┌──┐
+//   │M ││T ││W │┃T ┃│F ││S ││S │
+//   │26││27││28│┃29┃│30││31││1 │      ← il giorno scelto è viola
+//   └──┘└──┘└──┘┗━━┛└──┘└──┘└──┘
+//
+//  Un puntino verde segna i giorni "speciali" (es. il giorno di un esame).
+//  Scorri a destra/sinistra per cambiare settimana.
 //
 
 import SwiftUI
@@ -15,27 +20,26 @@ import SwiftUI
 struct WeekStrip: View {
     // @Binding = un valore che appartiene alla vista "madre": lo leggo e lo cambio, ma non è mio
     @Binding var selected: Date
-    /// Giorni da segnare con un puntino (qualsiasi ora: confronto solo il giorno)
+    /// Giorni da segnare con un puntino
     var marked: [Date] = []
 
-    /// Settimana che parte dal lunedì, come in Sketch
+    /// La settimana parte dal lunedì, come in Sketch
     private var calendar: Calendar {
         var calendar = Calendar.current
-        calendar.firstWeekday = 2
-        calendar.locale = L10n.locale
+        calendar.firstWeekday = 2   // 1 = domenica, 2 = lunedì
         return calendar
     }
 
+    /// I 7 giorni della settimana del giorno scelto
     private var days: [Date] {
         guard let week = calendar.dateInterval(of: .weekOfYear, for: selected) else { return [] }
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: week.start) }
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 7) {
             ForEach(days, id: \.self) { day in
-                dayButton(day)
-                    .frame(maxWidth: .infinity)
+                dayBox(day)
             }
         }
         .contentShape(Rectangle())
@@ -50,34 +54,30 @@ struct WeekStrip: View {
         )
     }
 
-    private func dayButton(_ day: Date) -> some View {
+    private func dayBox(_ day: Date) -> some View {
         let isSelected = calendar.isDate(day, inSameDayAs: selected)
-        let isToday = calendar.isDateInToday(day)
         let isMarked = marked.contains { calendar.isDate($0, inSameDayAs: day) }
 
         return Button {
             Haptics.tap()
-            // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
             withAnimation(.snappy) { selected = day }
         } label: {
-            VStack(spacing: 5) {
+            VStack(spacing: 4) {
+                // "M", "T", "W"… (in italiano "L", "M", "M"…)
                 Text(day.formatted(.dateTime.weekday(.narrow).locale(L10n.locale)))
-                    .font(.system(.subheadline, design: .serif, weight: .bold))
-                    .foregroundStyle(Theme.ink)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(isSelected ? Theme.background : Theme.secondary)
                 Text("\(calendar.component(.day, from: day))")
-                    .font(.system(.subheadline, design: .serif, weight: isToday ? .bold : .regular))
-                    .foregroundStyle(isToday ? Theme.rust : Theme.mute)
+                    .font(.system(.title3, weight: .bold))
+                    .foregroundStyle(isSelected ? Theme.background : Theme.text)
                 Circle()
-                    .fill(isMarked ? Theme.rust : .clear)
+                    .fill(isMarked ? (isSelected ? Theme.background : Theme.accent) : Color.clear)
                     .frame(width: 5, height: 5)
             }
-            .frame(width: 40, height: 66)
-            .overlay {
-                if isSelected {
-                    Capsule().strokeBorder(Theme.ink, lineWidth: 1.5)
-                }
-            }
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+            .background(isSelected ? Theme.main : Theme.card,
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
@@ -96,4 +96,5 @@ struct WeekStrip: View {
 #Preview {
     WeekStrip(selected: .constant(Date()), marked: [Date().addingTimeInterval(86_400 * 2)])
         .padding()
+        .background(Theme.background)
 }

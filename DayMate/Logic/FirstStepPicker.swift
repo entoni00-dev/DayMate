@@ -6,10 +6,9 @@
 //
 //  Il "cuore" dell'idea: il RISCALDAMENTO iniziale in base a come ti senti.
 //
-//  Great     → nessun riscaldamento: si parte col primo blocco di studio
-//  Sleepy    → nessun riscaldamento: serve energia, non un passo più piccolo
-//              (i blocchi corti e il bicchiere d'acqua li gestiscono StudyRhythm e il fumetto)
-//  Stressed  → 3 minuti: leggi solo le prime righe del prossimo passo
+//  Ready     → nessun riscaldamento: si parte col blocco intero
+//  Tired     → nessun riscaldamento, ma blocchi corti (vedi StudyRhythm)
+//  Stressed  → nessun riscaldamento: si parte con una PAUSA (vedi StudySessionModel)
 //  Stuck     → 2 minuti: un gesto fisico minuscolo, tipo "apri il libro"
 //
 //  Il principio è quello delle "tiny habits" (BJ Fogg, Stanford): abbassare
@@ -39,23 +38,10 @@ enum FirstStepPicker {
         ]
     }
 
-    /// Il riscaldamento per l'umore scelto (nil = nessun riscaldamento)
-    static func warmUp(for mood: Mood, next: StudyStep?) -> PlannedStep? {
-        switch mood {
-        case .great, .sleepy:
-            return nil
-        case .stressed:
-            if let next {
-                return PlannedStep(
-                    text: tr("Read just the first lines of «\(next.topic)». Only those, nothing more.",
-                             "Leggi solo le prime righe di «\(next.topic)». Solo quelle, niente di più."),
-                    minutes: mood.firstTimerMinutes,
-                    step: nil)
-            }
-            return tinyStep(minutes: mood.firstTimerMinutes)
-        case .stuck:
-            return tinyStep(minutes: mood.firstTimerMinutes)
-        }
+    /// Il riscaldamento per l'umore scelto (nil = nessun riscaldamento).
+    /// Solo "Stuck" ha un riscaldamento: "Easier step first".
+    static func warmUp(for mood: Mood) -> PlannedStep? {
+        mood == .stuck ? tinyStep(minutes: mood.firstTimerMinutes) : nil
     }
 
     /// Un passo minuscolo casuale (usato anche dal pulsante "rendilo più piccolo")

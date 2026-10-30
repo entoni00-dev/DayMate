@@ -4,97 +4,86 @@
 //
 //  Created by Antonio Carotenuto.
 //
-//  "Before studying… How do you feel?" — la schermata Mood di Sketch.
-//  Quattro tessere miele con la faccia del bradipo; dopo la scelta compare il fumetto
-//  ("Got it: I'll make the first step extra small") e si va avanti con "Next".
+//  "How do you feel? — Your next step adapts to you" (schermata 04 di Sketch).
+//  Una lista con 4 righe: il Blob con la faccia giusta, il nome dell'umore e cosa farà l'app.
+//  Basta un tocco: niente bottone "Avanti" (un passo in meno tra me e lo studio).
 //
 //  La riuso due volte:
-//   - all'inizio (check-in)  → decide quanto piccolo sarà il primo passo
+//   - all'inizio (check-in)  → decide come parte la sessione
 //   - alla fine  (check-out) → per confrontare l'umore prima/dopo
 //
 
 import SwiftUI
 
 struct CheckInView: View {
-    let eyebrow: String
     let title: String
-    /// Testo del fumetto dopo la scelta (nil = uso l'incoraggiamento dell'umore)
-    var bubbleText: ((Mood) -> String)? = nil
-    var buttonTitle: String = tr("Next", "Avanti")
+    let subtitle: String
+    /// true = alla fine della sessione: non mostro "cosa farà l'app" sotto ogni umore
+    var isCheckOut = false
     var onSelect: (Mood) -> Void
 
-    // @State = un valore che questa vista "ricorda": quando cambia, SwiftUI ridisegna la schermata
-    @State private var selected: Mood?
-
-    private let columns = [GridItem(.fixed(140), spacing: 18), GridItem(.fixed(140), spacing: 18)]
-
     var body: some View {
-        VStack(spacing: 0) {
-            ScreenHeader(eyebrow: eyebrow, title: title)
+        // ScrollView: se il contenuto è più alto dello schermo, si scorre
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                ScreenTitle(title: title, subtitle: subtitle, large: false)
 
-            Spacer(minLength: 16)
+                // La lista: una card con 4 righe separate da una linea
+                VStack(spacing: 0) {
+                    ForEach(Mood.allCases) { mood in
+                        Button {
+                            Haptics.tap()
+                            onSelect(mood)
+                        } label: {
+                            row(mood)
+                        }
+                        .buttonStyle(.plain)
 
-            // LazyVGrid = una griglia (qui 2 colonne)
-            LazyVGrid(columns: columns, spacing: 18) {
-                ForEach(Mood.allCases) { mood in
-                    Button {
-                        Haptics.tap()
-                        // withAnimation: il cambiamento avviene con un'animazione invece che di colpo
-                        withAnimation(.spring(response: 0.35)) { selected = mood }
-                    } label: {
-                        MoodTile(mood: mood, isSelected: selected == mood)
+                        // la linea va solo TRA le righe, non dopo l'ultima
+                        if mood != Mood.allCases.last {
+                            RowDivider()
+                        }
                     }
-                    .buttonStyle(.plain)
+                }
+                .cardBackground(radius: 18)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+        }
+    }
+
+    private func row(_ mood: Mood) -> some View {
+        HStack(spacing: 14) {
+            // il Blob in un cerchio chiaro
+            BlobView(pose: mood.pose)
+                .padding(5)
+                .frame(width: 44, height: 44)
+                .background(Theme.lightMain.opacity(0.9), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(mood.title)
+                    .font(.dmRowTitle)
+                    .foregroundStyle(Theme.text)
+                if !isCheckOut {
+                    Text(mood.subtitle)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondary)
                 }
             }
-
-            Spacer(minLength: 16)
-
-            if let selected {
-                SlothBubble(text: bubbleText?(selected) ?? selected.encouragement)
-                    .transition(.scale(scale: 0.9).combined(with: .opacity))
-                    .id(selected)
-                    .padding(.bottom, 14)
-            }
-
-            Button(buttonTitle) {
-                if let selected { onSelect(selected) }
-            }
-            .buttonStyle(PillButtonStyle(variant: .dark))
-            .disabled(selected == nil)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondary)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 20)
-    }
-}
-
-/// Una tessera dell'umore
-private struct MoodTile: View {
-    let mood: Mood
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 4) {
-            SlothView(pose: mood.pose)
-                .frame(width: 84, height: 84)
-            Text(mood.title)
-                .font(.system(.title3, weight: .semibold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(width: 140, height: 140)
-        .background(Theme.honey, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous)
-            .strokeBorder(isSelected ? Theme.cocoa : .black.opacity(0.05), lineWidth: isSelected ? 3.5 : 1))
-        .shadow(color: .black.opacity(isSelected ? 0.2 : 0.08), radius: isSelected ? 10 : 4, y: 3)
-        .scaleEffect(isSelected ? 1.04 : 1)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())   // tutta la riga è toccabile
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
 // Anteprima per il canvas di Xcode (non finisce nell'app)
 #Preview {
-    CheckInView(eyebrow: "Before studying…", title: "How do you feel?") { _ in }
+    CheckInView(title: "How do you feel?", subtitle: "Your next step adapts to you") { _ in }
+        .background(Theme.background)
 }
